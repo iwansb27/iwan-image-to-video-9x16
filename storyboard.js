@@ -14,14 +14,36 @@ let storyboard = null;
 const saveKeyBtn = document.querySelector('#saveGeminiKey');
 const keySaveStatus = document.querySelector('#keySaveStatus');
 
+function lockGeminiKey(){
+  if(keyEl) keyEl.readOnly = true;
+  if(saveKeyBtn){
+    saveKeyBtn.disabled = true;
+    saveKeyBtn.textContent = 'API Key Tersimpan ✓';
+  }
+}
+
+function unlockGeminiKey(){
+  if(keyEl) keyEl.readOnly = false;
+  if(saveKeyBtn){
+    saveKeyBtn.disabled = false;
+    saveKeyBtn.textContent = 'Simpan API Key';
+  }
+}
+
 function loadGeminiKey(){
   try{
     const saved = localStorage.getItem('iwan_gemini_api_key') || '';
     keyEl.value = saved;
-    if(saved && keySaveStatus) keySaveStatus.textContent = 'API key tersimpan di browser.';
+    if(saved){
+      if(keySaveStatus) keySaveStatus.textContent = 'API key tersimpan di browser.';
+      lockGeminiKey();
+    }else{
+      unlockGeminiKey();
+    }
   }catch(err){
     console.warn('localStorage tidak tersedia', err);
     if(keySaveStatus) keySaveStatus.textContent = 'Penyimpanan browser tidak tersedia.';
+    unlockGeminiKey();
   }
 }
 
@@ -40,7 +62,8 @@ function saveGeminiKey(event){
     const check = localStorage.getItem('iwan_gemini_api_key');
     if(check !== key) throw new Error('Verifikasi penyimpanan gagal.');
     if(keySaveStatus) keySaveStatus.textContent = '✓ API key tersimpan di browser.';
-    setStoryStatus('API key Gemini berhasil disimpan.');
+    setStoryStatus('API key Gemini berhasil disimpan dan dikunci.');
+    lockGeminiKey();
   }catch(err){
     console.error(err);
     if(keySaveStatus) keySaveStatus.textContent = '✕ Gagal menyimpan di browser.';
