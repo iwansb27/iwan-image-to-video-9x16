@@ -6,3 +6,4 @@
 .scene-reference-note{font-size:9px;font-weight:900;letter-spacing:.05em;color:#777;margin:-2px 0 7px;text-align:center}.story-actions{display:grid;gap:9px;margin-top:14px}.story-actions button{width:100%}
 
 .flow-link{display:flex;align-items:center;justify-content:center;text-decoration:none;border:1px solid #343844;border-radius:11px;padding:11px 14px;background:#171920;color:#dfe2ea;font-weight:800;cursor:pointer}.flow-link:hover{background:#1d2028}
+.flow-duration-label{display:flex;flex-direction:column;gap:6px;color:#a8adb8;font-size:12px;margin-top:12px}.flow-duration-label select{width:100%;background:#0b0c10;color:#f4f5f7;border:1px solid #2a2d36;border-radius:10px;padding:10px}
