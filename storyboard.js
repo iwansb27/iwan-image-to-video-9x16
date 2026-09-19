@@ -152,41 +152,39 @@ Keluarkan HANYA JSON dengan struktur:
 async function geminiTextStoryboard(key){
   const base64=sourceDataUrl.split(',')[1];
   const mime=sourceDataUrl.slice(5,sourceDataUrl.indexOf(';'));
-  const models=['gemini-3.8-flash','gemini-3.7-flash','gemini-3.6-flash','gemini-3.5-flash-lite'];
-  let lastError='Gemini tidak dapat memproses permintaan.';
+  const models=['qwen/qwen3-vl-30b-a3b:free','google/gemini-2.5-flash-lite','google/gemini-2.5-flash'];
+  let lastError='OpenRouter/Gemini tidak dapat memproses permintaan.';
   for(const model of models){
-    const body={
-      model,
-      input:[
-        {type:'image',mime_type:mime,data:base64},
-        {type:'text',text:promptForGemini()}
-      ],
-      response_format:{type:'text',mime_type:'application/json'}
-    };
-    for(let attempt=0;attempt<3;attempt++){
-      try{
-        const res=await fetch('https://generativelanguage.googleapis.com/v1beta/interactions?key='+encodeURIComponent(key),{
-          method:'POST',
-          headers:{'Content-Type':'application/json','x-goog-api-key':key},
-          body:JSON.stringify(body)
-        });
-        const data=await res.json();
-        if(res.ok){
-          const text=data?.steps?.filter(s=>s.type==='model_output')?.flatMap(s=>s.content||[]).filter(p=>p.type==='text').map(p=>p.text||'').join('') || '';
-          if(!text) throw new Error('Gemini tidak mengembalikan teks storyboard.');
-          return extractJson(text);
-        }
-        lastError=data?.error?.message || ('Gemini API gagal pada '+model+'.');
-        const transient=res.status===429 || res.status===500 || res.status===502 || res.status===503 || res.status===504;
-        if(!transient) throw new Error(lastError);
-      }catch(err){
-        lastError=err?.message || String(err);
-        if(attempt===2 && !/high demand|temporar|429|503|502|504/i.test(lastError)) throw err;
+    try{
+      const body={
+        model,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'text',text:promptForGemini()},
+            {type:'image_url',image_url:{url:sourceDataUrl}}
+          ]
+        }],
+        temperature:0.2
+      };
+      const res=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+encodeURIComponent(key)},
+        body:JSON.stringify(body)
+      });
+      const data=await res.json();
+      if(res.ok){
+        const text=data?.choices?.[0]?.message?.content || '';
+        if(!text) throw new Error('AI tidak mengembalikan teks storyboard.');
+        return extractJson(text);
       }
-      await new Promise(r=>setTimeout(r,1200*Math.pow(2,attempt)));
+      lastError=data?.error?.message || ('OpenRouter gagal pada '+model+'.');
+      if(!(res.status===429 || res.status>=500)) throw new Error(lastError);
+    }catch(err){
+      lastError=err?.message || String(err);
     }
   }
-  throw new Error(lastError+' Semua model Flash yang tersedia sedang sibuk. Silakan coba lagi beberapa saat.');
+  throw new Error(lastError);
 }
 
 async function generateCleanSceneImage(key, scene){
@@ -266,6 +264,7 @@ async function generateStoryboard(){
     return;
   }
   localStorage.setItem('iwan_gemini_api_key',key);
+  const generateImagesBtn=document.querySelector('#generateSceneImages') || (()=>{ const b=document.createElement('button'); b.id='generateSceneImages'; b.className='secondary'; b.type='button'; b.textContent='Generate 6 Gambar'; b.disabled=true; b.addEventListener('click',generateAllSceneImages); generateBtn.parentElement?.appendChild(b); return b; })();
   generateBtn.disabled=true;
   startStoryTimer();
   updateProgress(0,'membaca screenshot & menyusun storyboard');
@@ -277,25 +276,14 @@ async function generateStoryboard(){
     storyboard.scenes=storyboard.scenes.map(s=>({...s, imageDataUrl:''}));
     renderStoryboard();
 
-    for(let i=0;i<storyboard.scenes.length;i++){
-      updateProgress(i,'membuat visual bersih');
-      try{
-        storyboard.scenes[i].imageDataUrl=await generateCleanSceneImage(key,storyboard.scenes[i]);
-      }catch(imageErr){
-        console.warn(imageErr);
-        storyboard.scenes[i].imageDataUrl='';
-        storyboard.scenes[i].imageFallback=true;
-        storyboard.scenes[i].imageError=imageErr?.message || 'Image generation gagal.';
-      }
-      renderStoryboard();
+    const generateImagesBtn=document.querySelector('#generateSceneImages');
+    if(generateImagesBtn){
+      generateImagesBtn.disabled=false;
+      generateImagesBtn.textContent='Generate 6 Gambar';
     }
+    updateProgress(6,'storyboard teks selesai · siap generate gambar');
 
-    const fallbackCount=storyboard.scenes.filter(s=>s.imageFallback).length;
-    stopStoryTimer();
-    const finalTime=formatElapsed(Date.now()-storyStartedAt);
-    setStoryStatus(fallbackCount
-      ? `Selesai ${finalTime} · Scene 6/6 · ${fallbackCount} visual belum berhasil dibuat. Screenshot marketplace tidak ditampilkan sebagai fallback.`
-      : `Selesai ${finalTime} · Scene 6/6 · Storyboard 6 scene selesai dengan visual bersih 9:16.`);
+    setStoryStatus(`Storyboard teks selesai ${formatElapsed(Date.now()-storyStartedAt)} · Scene 6/6 · tombol Generate 6 Gambar siap.`);
   }catch(err){
     console.error(err);
     stopStoryTimer();
@@ -303,6 +291,32 @@ async function generateStoryboard(){
   }finally{
     generateBtn.disabled=false;
   }
+}
+
+async function generateAllSceneImages(){
+  if(!storyboard?.scenes?.length){ setStoryStatus('Buat storyboard teks terlebih dahulu.'); return; }
+  const btn=document.querySelector('#generateSceneImages');
+  if(btn) btn.disabled=true;
+  const started=Date.now();
+  for(let i=0;i<storyboard.scenes.length;i++){
+    updateProgress(i,'generate gambar bersih');
+    try{
+      storyboard.scenes[i].imageDataUrl=await generateCleanSceneImage(keyEl.value.trim(),storyboard.scenes[i]);
+      storyboard.scenes[i].imageFallback=false;
+    }catch(err){
+      storyboard.scenes[i].imageDataUrl='';
+      storyboard.scenes[i].imageFallback=true;
+      storyboard.scenes[i].imageError=err?.message || 'Image generation gagal.';
+    }
+    renderStoryboard();
+    updateProgress(i+1,'gambar selesai');
+  }
+  stopStoryTimer();
+  const failed=storyboard.scenes.filter(s=>!s.imageDataUrl).length;
+  setStoryStatus(failed
+    ? `Generate gambar selesai ${formatElapsed(Date.now()-started)} · ${failed} scene belum memiliki gambar.`
+    : `Generate 6 gambar selesai ${formatElapsed(Date.now()-started)} · Scene 6/6 ✓`);
+  if(btn){ btn.disabled=false; btn.textContent='Generate 6 Gambar'; }
 }
 
 function escapeHtml(v=''){
