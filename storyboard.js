@@ -83,44 +83,88 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 async function callGemini(key){
   const base64=sourceDataUrl.split(',')[1];
   const mime=sourceDataUrl.slice(5,sourceDataUrl.indexOf(';'));
-  const models=['gemini-3.6-flash','gemini-3.7-flash','gemini-flash-latest'];
-  let last='Gemini gagal membuat master prompt.';
+
+  // Google now recommends Interactions API for new Gemini integrations.
+  // Try current stable Flash models in order; do not keep hammering one overloaded model.
+  const models=['gemini-3.8-flash','gemini-3.7-flash','gemini-3.6-flash','gemini-3.5-flash-lite'];
+  let last='Gemini tidak dapat membuat master prompt.';
+
   for(const model of models){
-    for(let attempt=0;attempt<2;attempt++){
+    try{
+      const ctl=new AbortController();
+      const tid=setTimeout(()=>ctl.abort(),60000);
+      let res;
       try{
-        const ctl=new AbortController();
-        const tid=setTimeout(()=>ctl.abort(),45000);
-        let res;
-        try{
-          res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',{
-            method:'POST',
-            headers:{'Content-Type':'application/json','x-goog-api-key':key},
-            body:JSON.stringify({
-              contents:[{parts:[
-                {inline_data:{mime_type:mime,data:base64}},
-                {text:storyboardInstruction()}
-              ]}]
-            }),
-            signal:ctl.signal
-          });
-        }finally{clearTimeout(tid)}
-        const data=await res.json();
-        if(res.ok){
-          const text=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('').trim()||'';
-          if(!text)throw Error('Gemini tidak mengembalikan master prompt.');
-          return text;
+        res=await fetch('https://generativelanguage.googleapis.com/v1beta/interactions',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-goog-api-key':key},
+          body:JSON.stringify({
+            model,
+            store:false,
+            input:[
+              {
+                type:'image',
+                mime_type:mime,
+                data:base64
+              },
+              {
+                type:'text',
+                text:storyboardInstruction()
+              }
+            ],
+            generation_config:{
+              max_output_tokens:4096
+            }
+          }),
+          signal:ctl.signal
+        });
+      }finally{clearTimeout(tid)}
+
+      const raw=await res.text();
+      let data={};
+      try{data=raw?JSON.parse(raw):{}}catch(e){}
+
+      if(res.ok){
+        const parts=[];
+        for(const step of (data?.steps||[])){
+          if(step?.type==='model_output'){
+            for(const part of (step?.content||[])){
+              if(part?.type==='text'&&part.text)parts.push(part.text);
+            }
+          }
         }
-        last=data?.error?.message||('Gemini gagal pada '+model+'.');
-        const retryable=res.status===429||res.status===500||res.status===502||res.status===503||res.status===504;
-        if(!retryable)throw Error(last);
-        if(attempt===0)await sleep(2000);
-      }catch(e){
-        last=e?.name==='AbortError'?'Timeout 45 detik.':(e.message||String(e));
-        if(attempt===0)await sleep(2000);
+        const text=parts.join('').trim()||data?.output_text?.trim()||'';
+        if(text)return text;
+        last='Gemini '+model+' selesai tetapi tidak mengembalikan teks.';
+        continue;
       }
+
+      const msg=data?.error?.message||('HTTP '+res.status+' dari Gemini '+model+'.');
+      last=msg;
+
+      // 400/401/403/404 are configuration/auth/model errors; continuing to another
+      // model will not reliably fix the key, so surface the exact error.
+      if([400,401,403,404].includes(res.status))throw Error(msg);
+
+      // 429/500/502/503/504 can be transient. Respect Retry-After when supplied,
+      // but only retry once so the browser does not hammer an overloaded service.
+      const retryable=[429,500,502,503,504].includes(res.status);
+      if(retryable){
+        const retryAfter=Number(res.headers.get('retry-after'));
+        const waitMs=Number.isFinite(retryAfter)&&retryAfter>0
+          ?Math.min(retryAfter*1000,15000)
+          :3000;
+        await sleep(waitMs);
+        continue;
+      }
+    }catch(e){
+      if(e?.name==='AbortError')last='Timeout 60 detik saat menghubungi Gemini '+model+'.';
+      else last=e?.message||String(e);
+      if(/API key|permission|unauthorized|forbidden|not found|invalid/i.test(last))throw Error(last);
     }
   }
-  throw Error(last);
+
+  throw Error('Semua model Gemini yang dicoba sedang tidak dapat melayani permintaan. Detail terakhir: '+last);
 }
 
 function esc(v=''){
