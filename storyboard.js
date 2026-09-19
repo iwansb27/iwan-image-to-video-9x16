@@ -2,7 +2,7 @@ const storyImageEl = document.querySelector('#storyImage');
 const storyPreview = document.querySelector('#storySourcePreview');
 const storyDrop = document.querySelector('#storyDrop');
 const keyEl = document.querySelector('#geminiKey');
-const openRouterKeyEl = document.querySelector('#openRouterKey');
+const pixazoKeyEl = document.querySelector('#pixazoKey');
 const generateBtn = document.querySelector('#generateStoryboard');
 const copyMasterBtn = document.querySelector('#copyMasterPrompt');
 const downloadBtn = document.querySelector('#downloadStoryboard');
@@ -17,8 +17,8 @@ let storyProgressScene = 0;
 
 const saveKeyBtn = document.querySelector('#saveGeminiKey');
 const keySaveStatus = document.querySelector('#keySaveStatus');
-const saveOpenRouterKeyBtn = document.querySelector('#saveOpenRouterKey');
-const openRouterKeySaveStatus = document.querySelector('#openRouterKeySaveStatus');
+const savePixazoKeyBtn = document.querySelector('#savePixazoKey');
+const pixazoKeySaveStatus = document.querySelector('#pixazoKeySaveStatus');
 const generateImagesBtnEl = document.querySelector('#generateSceneImages');
 
 function lockGeminiKey(){
@@ -29,52 +29,33 @@ function lockGeminiKey(){
   }
 }
 
-function lockOpenRouterKey(){
-  if(openRouterKeyEl){ openRouterKeyEl.readOnly = true; openRouterKeyEl.disabled = true; }
-  if(saveOpenRouterKeyBtn){
-    saveOpenRouterKeyBtn.disabled = true;
-    saveOpenRouterKeyBtn.textContent = 'OpenRouter Tersimpan ✓';
-  }
+function lockPixazoKey(){
+  if(pixazoKeyEl){ pixazoKeyEl.readOnly = true; pixazoKeyEl.disabled = true; }
+  if(savePixazoKeyBtn){ savePixazoKeyBtn.disabled = true; savePixazoKeyBtn.textContent = 'Pixazo Tersimpan ✓'; }
 }
-function unlockOpenRouterKey(){
-  if(openRouterKeyEl){ openRouterKeyEl.readOnly = false; openRouterKeyEl.disabled = false; }
-  if(saveOpenRouterKeyBtn){
-    saveOpenRouterKeyBtn.disabled = false;
-    saveOpenRouterKeyBtn.textContent = 'Simpan OpenRouter';
-  }
+function unlockPixazoKey(){
+  if(pixazoKeyEl){ pixazoKeyEl.readOnly = false; pixazoKeyEl.disabled = false; }
+  if(savePixazoKeyBtn){ savePixazoKeyBtn.disabled = false; savePixazoKeyBtn.textContent = 'Simpan Pixazo'; }
 }
-function loadOpenRouterKey(){
+function loadPixazoKey(){
   try{
-    const saved = localStorage.getItem('iwan_openrouter_api_key') || '';
-    openRouterKeyEl.value = saved;
-    if(saved){
-      if(openRouterKeySaveStatus) openRouterKeySaveStatus.textContent = 'OpenRouter API key tersimpan di browser.';
-      lockOpenRouterKey();
-    }else{
-      unlockOpenRouterKey();
-    }
-  }catch(err){
-    console.warn('localStorage OpenRouter tidak tersedia', err);
-    unlockOpenRouterKey();
-  }
+    const saved = localStorage.getItem('iwan_pixazo_api_key') || '';
+    pixazoKeyEl.value = saved;
+    if(saved){ if(pixazoKeySaveStatus) pixazoKeySaveStatus.textContent = 'Pixazo API key tersimpan di browser.'; lockPixazoKey(); }
+    else unlockPixazoKey();
+  }catch(err){ console.warn('localStorage Pixazo tidak tersedia', err); unlockPixazoKey(); }
 }
-function saveOpenRouterKey(event){
-  event?.preventDefault();
-  event?.stopPropagation();
-  const key = openRouterKeyEl.value.trim();
-  if(!key){
-    if(openRouterKeySaveStatus) openRouterKeySaveStatus.textContent = 'OpenRouter API key masih kosong.';
-    return;
-  }
+function savePixazoKey(event){
+  event?.preventDefault(); event?.stopPropagation();
+  const key = pixazoKeyEl.value.trim();
+  if(!key){ if(pixazoKeySaveStatus) pixazoKeySaveStatus.textContent = 'Pixazo API key masih kosong.'; return; }
   try{
-    localStorage.setItem('iwan_openrouter_api_key', key);
-    if(localStorage.getItem('iwan_openrouter_api_key') !== key) throw new Error('Verifikasi penyimpanan gagal.');
-    if(openRouterKeySaveStatus) openRouterKeySaveStatus.textContent = '✓ OpenRouter API key tersimpan di browser.';
-    lockOpenRouterKey();
-  }catch(err){
-    console.error(err);
-    if(openRouterKeySaveStatus) openRouterKeySaveStatus.textContent = '✕ Gagal menyimpan OpenRouter API key.';
-  }
+    localStorage.setItem('iwan_pixazo_api_key', key);
+    if(localStorage.getItem('iwan_pixazo_api_key') !== key) throw new Error('Verifikasi penyimpanan gagal.');
+    if(pixazoKeySaveStatus) pixazoKeySaveStatus.textContent = '✓ Pixazo API key tersimpan di browser.';
+    setStoryStatus('Pixazo API key berhasil disimpan dan dikunci.');
+    lockPixazoKey();
+  }catch(err){ console.error(err); if(pixazoKeySaveStatus) pixazoKeySaveStatus.textContent = '✕ Gagal menyimpan Pixazo API key.'; }
 }
 
 function unlockGeminiKey(){
@@ -127,9 +108,9 @@ function saveGeminiKey(event){
 }
 
 loadGeminiKey();
-loadOpenRouterKey();
+loadPixazoKey();
 saveKeyBtn?.addEventListener('click', saveGeminiKey);
-saveOpenRouterKeyBtn?.addEventListener('click', saveOpenRouterKey);
+savePixazoKeyBtn?.addEventListener('click', savePixazoKey);
 
 keyEl.addEventListener('change', saveGeminiKey);
 
@@ -248,8 +229,8 @@ async function geminiTextStoryboard(key){
   throw new Error(lastError);
 }
 
-async function generateCleanSceneImage(openRouterKey, scene){
-  const model='qwen/qwen-image-3';
+async function generateCleanSceneImage(pixazoKey, scene){
+  const endpoint='https://gateway.pixazo.ai/sd3-5/v1/r-sd-3-5-large';
   const cleanPrompt=`Create ONE clean advertising storyboard frame for Scene ${scene.scene}.
 
 The supplied image is ONLY a product reference. Recreate the physical product as a clean standalone commercial visual.
@@ -271,40 +252,35 @@ STRICT RULES:
 - Product is the main subject.
 - Native vertical 9:16 composition for smartphone video.
 - Generate an image, not a screenshot.`;
-
   const controller=new AbortController();
   const timeoutId=setTimeout(()=>controller.abort(),75000);
   try{
-    const body={
-      model,
-      prompt:cleanPrompt,
-      input_references:[
-        {type:'image_url',image_url:{url:sourceDataUrl}}
-      ],
-      aspect_ratio:'9:16',
-      resolution:'1K'
-    };
-    const res=await fetch('https://openrouter.ai/api/v1/images',{
+    const res=await fetch(endpoint,{
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'Authorization':'Bearer '+openRouterKey
-      },
-      body:JSON.stringify(body),
+      headers:{'Content-Type':'application/json','Cache-Control':'no-cache','Ocp-Apim-Subscription-Key':pixazoKey},
+      body:JSON.stringify({
+        prompt:cleanPrompt,
+        image:sourceDataUrl,
+        aspect_ratio:'9:16',
+        cfg:5,
+        steps:30,
+        prompt_strength:0.72,
+        output_format:'png',
+        output_quality:95
+      }),
       signal:controller.signal
     });
     const data=await res.json();
-    if(!res.ok) throw new Error(data?.error?.message || 'OpenRouter image generation gagal pada Scene '+scene.scene+'.');
-    const item=data?.data?.[0];
-    if(!item?.b64_json) throw new Error('OpenRouter tidak mengembalikan gambar untuk Scene '+scene.scene+'.');
-    const mediaType=item.media_type || 'image/png';
-    return 'data:'+mediaType+';base64,'+item.b64_json;
+    if(!res.ok) throw new Error(data?.message || data?.error || 'Pixazo image generation gagal pada Scene '+scene.scene+'.');
+    if(!data?.output) throw new Error('Pixazo tidak mengembalikan URL gambar pada Scene '+scene.scene+'.');
+    const imageRes=await fetch(data.output);
+    if(!imageRes.ok) throw new Error('Gambar hasil Pixazo tidak dapat diambil pada Scene '+scene.scene+'.');
+    const blob=await imageRes.blob();
+    return await new Promise((resolve,reject)=>{ const reader=new FileReader(); reader.onload=()=>resolve(reader.result); reader.onerror=reject; reader.readAsDataURL(blob); });
   }catch(err){
-    if(err?.name==='AbortError') throw new Error('OpenRouter timeout setelah 75 detik pada Scene '+scene.scene+'.');
+    if(err?.name==='AbortError') throw new Error('Pixazo timeout setelah 75 detik pada Scene '+scene.scene+'.');
     throw err;
-  }finally{
-    clearTimeout(timeoutId);
-  }
+  }finally{ clearTimeout(timeoutId); }
 }
 
 async function generateStoryboard(){
@@ -346,8 +322,9 @@ async function generateStoryboard(){
 
 async function generateAllSceneImages(){
   if(!storyboard?.scenes?.length){ setStoryStatus('Buat storyboard teks terlebih dahulu.'); return; }
-  const openRouterKey=openRouterKeyEl.value.trim();
-  if(!openRouterKey){ setStoryStatus('Masukkan OpenRouter API key terlebih dahulu.'); openRouterKeyEl.focus(); return; }
+  const pixazoKey=pixazoKeyEl.value.trim();
+  if(!pixazoKey){ setStoryStatus('Masukkan Pixazo API key terlebih dahulu.'); pixazoKeyEl.focus(); return; }
+  localStorage.setItem('iwan_pixazo_api_key',pixazoKey);
   const btn=document.querySelector('#generateSceneImages');
   if(btn) btn.disabled=true;
   startStoryTimer();
@@ -355,7 +332,7 @@ async function generateAllSceneImages(){
   for(let i=0;i<storyboard.scenes.length;i++){
     updateProgress(i,'generate gambar bersih');
     try{
-      storyboard.scenes[i].imageDataUrl=await generateCleanSceneImage(openRouterKey,storyboard.scenes[i]);
+      storyboard.scenes[i].imageDataUrl=await generateCleanSceneImage(pixazoKey,storyboard.scenes[i]);
       storyboard.scenes[i].imageFallback=false;
     }catch(err){
       storyboard.scenes[i].imageDataUrl='';
