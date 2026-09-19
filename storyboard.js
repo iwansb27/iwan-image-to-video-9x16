@@ -81,7 +81,7 @@ Keluarkan HANYA satu MASTER PROMPT dalam bahasa Inggris. Jangan keluarkan storyb
 async function callGemini(key){
   const base64=sourceDataUrl.split(',')[1];
   const mime=sourceDataUrl.slice(5,sourceDataUrl.indexOf(';'));
-  const models=['gemini-3.8-flash','gemini-2.5-flash'];
+  const models=['gemini-3.6-flash'];
   let last='Gemini gagal membuat master prompt.';
   for(const model of models){
     try{
@@ -97,7 +97,7 @@ async function callGemini(key){
               {inline_data:{mime_type:mime,data:base64}},
               {text:storyboardInstruction()}
             ]}],
-            generationConfig:{temperature:0.35}
+            generationConfig:{}
           }),
           signal:ctl.signal
         });
