@@ -99,7 +99,7 @@ GOOGLE FLOW INSTRUCTIONS TO INCLUDE:
 - Do not use “8K” as a requirement; prioritize photorealism, detail, continuity, and fidelity to the reference.
 
 OUTPUT RULE:
-Return ONLY ONE MASTER PROMPT in English. Do not return analysis, notes, JSON, tables, explanations, alternative prompts, or images. The master prompt itself must contain the complete 6-shot timeline matching the selected duration, the reference-grounded product description, screenshot-cleanup instructions, continuity rules, camera movement, and 9:16/12-second specifications.
+Return ONLY ONE MASTER PROMPT in English. Do not return analysis, notes, JSON, tables, explanations, alternative prompts, or images. The master prompt itself must contain the complete 6-shot timeline matching the selected duration, the reference-grounded product description, screenshot-cleanup instructions, continuity rules, camera movement, and native 9:16 specifications.
 
 FINAL SELF-CHECK BEFORE OUTPUT:
 Ask internally: “Could every specific product feature and every physical interaction in this prompt be verified from the CURRENT screenshot?” If not, delete or neutralize that detail. The prompt must be reusable for completely different product screenshots and must never be biased toward any example product.`;
@@ -182,7 +182,7 @@ function esc(v=''){
 }
 
 function render(){
-  const d=flowDurationEl?.value||'8'; sheet.innerHTML='<div class="story-title">MASTER PROMPT — GOOGLE FLOW</div><div class="story-format">9:16 · 6 SCENE · '+d+' DETIK</div><pre class="master-prompt">'+esc(masterPrompt)+'</pre>';
+  const d=flowDurationEl?.value||'8'; sheet.innerHTML='<div class="story-title">MASTER PROMPT — GOOGLE FLOW</div><div class="story-format">9:16 · 6 SHOT · '+d+' DETIK</div><pre class="master-prompt">'+esc(masterPrompt)+'</pre>';
 }
 
 async function generate(){
@@ -195,7 +195,7 @@ async function generate(){
   try{
     masterPrompt=await callGemini(key);
     render();
-    setStoryStatus('✓ Master Prompt 6 scene · durasi sesuai mode Google Flow siap di-copy.');
+    setStoryStatus('✓ MASTER PROMPT 6 SHOT · 8 detik · siap langsung ke Google Flow.');
   }catch(e){
     setStoryStatus('Gagal: '+(e.message||e));
   }finally{generateBtn.disabled=false}
