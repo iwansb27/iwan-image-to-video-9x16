@@ -11,23 +11,47 @@ const sheet = document.querySelector('#storyboardSheet');
 let sourceDataUrl = '';
 let storyboard = null;
 
-const savedKey = localStorage.getItem('iwan_gemini_api_key') || '';
-keyEl.value = savedKey;
 const saveKeyBtn = document.querySelector('#saveGeminiKey');
 const keySaveStatus = document.querySelector('#keySaveStatus');
 
-function saveGeminiKey(){
-  const key = keyEl.value.trim();
-  if(!key){ setStoryStatus('API key Gemini masih kosong.'); keyEl.focus(); return; }
-  localStorage.setItem('iwan_gemini_api_key', key);
-  if(keySaveStatus) keySaveStatus.textContent = 'API key tersimpan di browser.';
-  setStoryStatus('API key Gemini berhasil disimpan di browser.');
+function loadGeminiKey(){
+  try{
+    const saved = localStorage.getItem('iwan_gemini_api_key') || '';
+    keyEl.value = saved;
+    if(saved && keySaveStatus) keySaveStatus.textContent = 'API key tersimpan di browser.';
+  }catch(err){
+    console.warn('localStorage tidak tersedia', err);
+    if(keySaveStatus) keySaveStatus.textContent = 'Penyimpanan browser tidak tersedia.';
+  }
 }
+
+function saveGeminiKey(event){
+  event?.preventDefault();
+  event?.stopPropagation();
+  const key = keyEl.value.trim();
+  if(!key){
+    if(keySaveStatus) keySaveStatus.textContent = 'API key masih kosong.';
+    setStoryStatus('Masukkan API key Gemini terlebih dahulu.');
+    keyEl.focus();
+    return;
+  }
+  try{
+    localStorage.setItem('iwan_gemini_api_key', key);
+    const check = localStorage.getItem('iwan_gemini_api_key');
+    if(check !== key) throw new Error('Verifikasi penyimpanan gagal.');
+    if(keySaveStatus) keySaveStatus.textContent = '✓ API key tersimpan di browser.';
+    setStoryStatus('API key Gemini berhasil disimpan.');
+  }catch(err){
+    console.error(err);
+    if(keySaveStatus) keySaveStatus.textContent = '✕ Gagal menyimpan di browser.';
+    setStoryStatus('Gagal menyimpan API key. Browser memblokir penyimpanan lokal.');
+  }
+}
+
+loadGeminiKey();
 saveKeyBtn?.addEventListener('click', saveGeminiKey);
 
-keyEl.addEventListener('change', () => {
-  localStorage.setItem('iwan_gemini_api_key', keyEl.value.trim());
-});
+keyEl.addEventListener('change', saveGeminiKey);
 
 function setStoryStatus(t){ storyStatus.textContent = t; }
 
