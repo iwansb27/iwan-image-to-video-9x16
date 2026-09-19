@@ -11,6 +11,9 @@ const keySaveStatus=document.querySelector('#keySaveStatus');
 
 let sourceDataUrl='';
 let masterPrompt='';
+const storyPreviewWrap=document.querySelector('#storyPreviewWrap');
+const storyPreview=document.querySelector('#storyPreview');
+const storyPreviewMeta=document.querySelector('#storyPreviewMeta');
 
 function setStoryStatus(t){if(storyStatus)storyStatus.textContent=t}
 function fileToDataUrl(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)})}
@@ -40,7 +43,9 @@ saveKeyBtn?.addEventListener('click',saveKey);
 async function setSource(file){
   if(!file||!file.type.startsWith('image/'))return;
   sourceDataUrl=await fileToDataUrl(file);
-  setStoryStatus('Gambar referensi siap. Pilih durasi Google Flow, lalu buat prompt.');
+  if(storyPreview){storyPreview.src=sourceDataUrl;storyPreviewWrap.hidden=false}
+  if(storyPreviewMeta){storyPreviewMeta.textContent=file.name+' · '+Math.round(file.size/1024)+' KB'}
+  setStoryStatus('✓ Screenshot berhasil di-upload dan tampil di preview. Periksa gambar ini terlebih dahulu sebelum membuat prompt.');
 }
 storyImageEl?.addEventListener('change',e=>setSource(e.target.files?.[0]));
 storyDrop?.addEventListener('dragover',e=>e.preventDefault());
