@@ -57,39 +57,36 @@ function extractJson(t){
 }
 
 function storyboardInstruction(){
-return `Buat storyboard iklan produk berdasarkan SATU gambar reference yang saya kirim.
+return `Analisis SATU screenshot produk yang saya kirim. Console ini TIDAK membuat atau men-download gambar. Tugasmu HANYA membuat SATU MASTER PROMPT TEKS yang siap ditempel langsung ke Google Flow.
 
-TUJUAN: hasilnya akan langsung dipakai untuk Google Flow membuat video vertikal 9:16.
+Google Flow nanti akan menerima screenshot produk yang SAMA sebagai reference image. Prompt ini harus mengarahkan Google Flow untuk membersihkan screenshot dan mengubahnya menjadi video iklan produk yang bersih, realistis, sinematik, native vertical 9:16, durasi TOTAL 12 DETIK.
 
-Buat TEPAT 6 SCENE. Jangan membuat gambar baru dan jangan meminta 6 gambar berbeda. Reference image yang sama menjadi acuan identitas produk untuk semua scene.
+Buat SATU rangkaian video kontinu dengan 6 scene berurutan, masing-masing sekitar 2 detik:
+SCENE 1 0-2s: hook / pembuka produk
+SCENE 2 2-4s: product reveal
+SCENE 3 4-6s: penggunaan / demonstrasi
+SCENE 4 6-8s: manfaat utama
+SCENE 5 8-10s: detail produk / close-up
+SCENE 6 10-12s: hero shot / closing
 
-Aturan:
-1. Identifikasi produk dari reference image.
-2. Pertahankan bentuk, warna, logo, material, ukuran relatif, konektor, tombol, tekstur dan detail fisik produk. Jangan redesign.
-3. Abaikan elemen marketplace/screenshot yang tidak relevan: status bar, harga, rating, tombol belanja, seller, menu, notifikasi, dan UI.
-4. Susun alur iklan: hook → product reveal → penggunaan → manfaat → detail → hero/closing.
-5. Semua scene native vertical 9:16.
-6. Visual harus bersih, realistis, sinematik, product-focused.
-7. Gerakan harus realistis dan mudah dianimasikan Google Flow: camera push-in, pull-back, pan, orbit, tilt, rack focus, object movement yang wajar.
-8. Hindari gerakan yang membuat bentuk produk berubah atau tidak konsisten.
-9. Setiap prompt scene harus berupa prompt bahasa Inggris yang siap ditempel ke Google Flow.
-10. Setiap prompt harus menyebut bahwa produk berasal dari supplied reference image dan identitas produk harus dipertahankan.
-11. Jangan membuat teks/watermark acak di video.
-12. Master prompt harus menggabungkan keenam scene secara berurutan dan menegaskan bahwa satu reference image digunakan untuk menjaga konsistensi produk.
+PENTING:
+- Jangan membuat enam gambar berbeda.
+- Jangan mengubah, mendesain ulang, atau mengganti produk.
+- Gunakan screenshot yang diberikan sebagai satu-satunya reference identitas produk dari awal sampai akhir.
+- Pertahankan bentuk, proporsi, warna, logo, material, tekstur, konektor, tombol, dan detail fisik produk.
+- Bersihkan screenshot: hilangkan status bar, marketplace UI, harga, rating, tombol belanja, seller info, menu, notifikasi, watermark marketplace, dan elemen lain yang tidak terkait produk.
+- Jika background screenshot tidak cocok, buat background produk yang bersih dan realistis tanpa mengubah produk.
+- Tidak boleh ada teks acak, logo tambahan, watermark, atau artefak.
+- Semua perubahan terjadi melalui gerakan kamera, pencahayaan, lingkungan, dan aksi yang realistis; bukan perubahan bentuk produk.
+- Gerakan harus kontinu dan masuk akal dari scene ke scene: camera push-in, pan, tilt, orbit, rack focus, close-up, pull-back, atau gerakan objek yang wajar.
+- Hindari morphing, deformasi, produk berubah bentuk, objek tambahan yang tidak masuk akal, tangan/jari cacat, dan gerakan kamera yang ekstrem.
+- Setiap scene harus terasa sebagai kelanjutan scene sebelumnya, bukan enam klip yang terpisah.
+- Total durasi tepat 12 detik.
+- Output video final 9:16.
+- Gaya visual: clean commercial product advertisement, realistic, premium, cinematic lighting, sharp product details.
+- Prioritaskan produk tetap konsisten sepanjang video.
 
-Keluarkan HANYA JSON valid dengan struktur:
-{
-  "title":"...",
-  "scenes":[
-    {"scene":1,"duration":"0-3s","visual":"...","motion":"...","prompt":"..."},
-    {"scene":2,"duration":"3-6s","visual":"...","motion":"...","prompt":"..."},
-    {"scene":3,"duration":"6-9s","visual":"...","motion":"...","prompt":"..."},
-    {"scene":4,"duration":"9-12s","visual":"...","motion":"...","prompt":"..."},
-    {"scene":5,"duration":"12-15s","visual":"...","motion":"...","prompt":"..."},
-    {"scene":6,"duration":"15-18s","visual":"...","motion":"...","prompt":"..."}
-  ],
-  "master_prompt":"..."
-}`;
+Keluarkan HANYA satu MASTER PROMPT dalam bahasa Inggris. Jangan keluarkan storyboard JSON, tabel, atau enam gambar. Master prompt harus sudah memuat seluruh urutan 6 scene, timing 0-12 detik, instruksi membersihkan screenshot, konsistensi produk, gerakan kamera, dan spesifikasi 9:16.`;
 }
 
 async function callGemini(key){
