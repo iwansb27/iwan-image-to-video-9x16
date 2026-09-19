@@ -16,7 +16,11 @@
       </label>
       <div class="story-preview-wrap"><img id="storySourcePreview" alt="Preview screenshot" hidden></div>
       <label class="story-key">Gemini API Key <span>(disimpan lokal di browser)</span>
-        <input id="geminiKey" type="password" placeholder="Masukkan API key Gemini">
+        <div class="story-key-row">
+          <input id="geminiKey" type="password" placeholder="Masukkan API key Gemini">
+          <button id="saveGeminiKey" class="secondary" type="button">Simpan API Key</button>
+        </div>
+        <small id="keySaveStatus" class="status"></small>
       </label>
       <div class="story-actions">
         <button id="generateStoryboard" class="primary" type="button">Buat Storyboard 6 Scene</button>
