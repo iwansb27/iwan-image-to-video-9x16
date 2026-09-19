@@ -46,38 +46,58 @@ storyDrop?.addEventListener('dragover',e=>e.preventDefault());
 storyDrop?.addEventListener('drop',async e=>{e.preventDefault();await setSource(e.dataTransfer.files?.[0])});
 
 function storyboardInstruction(){
-return `Analisis SATU screenshot produk yang saya kirim. Console ini TIDAK membuat atau men-download gambar. Tugasmu HANYA membuat SATU MASTER PROMPT TEKS yang siap ditempel langsung ke Google Flow.
+return `Analyze ONLY the single product screenshot attached to this request. This instruction is a GENERAL PRODUCTION RULE for ANY future product screenshot, not a template for one example product. Never assume the product is a lighter, electronics accessory, pump, beauty item, food item, tool, or any other specific category unless the current reference image clearly shows that category.
 
-Google Flow nanti akan menerima screenshot produk yang SAMA sebagai reference image. Prompt ini harus mengarahkan Google Flow untuk membersihkan screenshot dan mengubahnya menjadi video iklan produk yang bersih, realistis, sinematik, native vertical 9:16, durasi TOTAL 12 DETIK.
+Console 2 does NOT create, edit, or download images. Your ONLY task is to produce ONE MASTER PROMPT TEXT that the user can paste directly into Google Flow.
 
-Buat SATU rangkaian video kontinu dengan 6 scene berurutan, masing-masing sekitar 2 detik:
-SCENE 1 0-2s: hook / pembuka produk
-SCENE 2 2-4s: product reveal
-SCENE 3 4-6s: penggunaan / demonstrasi
-SCENE 4 6-8s: manfaat utama
-SCENE 5 8-10s: detail produk / close-up
-SCENE 6 10-12s: hero shot / closing
+Google Flow will receive the SAME CURRENT screenshot as its reference image. The master prompt must tell Google Flow how to turn that current reference into one clean, realistic, cinematic product advertisement in native vertical 9:16 with TOTAL duration exactly 12 SECONDS.
 
-PENTING:
-- Jangan membuat enam gambar berbeda.
-- Jangan mengubah, mendesain ulang, atau mengganti produk.
-- Gunakan screenshot yang diberikan sebagai satu-satunya reference identitas produk dari awal sampai akhir.
-- Pertahankan bentuk, proporsi, warna, logo, material, tekstur, konektor, tombol, dan detail fisik produk yang benar-benar terlihat atau dapat diidentifikasi secara andal dari screenshot.
-- ATURAN ANTI-HALUSINASI: hanya deskripsikan fitur fisik, mekanisme, warna, tulisan/branding, material, aksesori, dan fungsi yang terlihat jelas atau dapat diidentifikasi secara andal dari reference image. Jangan pernah mengarang komponen tersembunyi, mekanisme internal, aksesori, branding, material, warna, atau fungsi yang tidak didukung oleh reference image.
-- Jika suatu detail tidak terlihat atau tidak pasti, jangan mengada-adakannya. Gunakan deskripsi netral seperti “the visible product detail” atau hilangkan detail tersebut.
-- Bersihkan screenshot: hilangkan status bar, marketplace UI, harga, rating, tombol belanja, seller info, menu, notifikasi, watermark marketplace, dan elemen lain yang tidak terkait produk.
-- Jika background screenshot tidak cocok, buat background produk yang bersih dan realistis tanpa mengubah produk.
-- Tidak boleh ada teks acak, logo tambahan, watermark, atau artefak.
-- Semua perubahan terjadi melalui gerakan kamera, pencahayaan, lingkungan, dan aksi yang realistis; bukan perubahan bentuk produk.
-- Gerakan harus kontinu dan masuk akal dari scene ke scene: camera push-in, pan, tilt, controlled partial orbit, rack focus, close-up, pull-back, atau gerakan objek yang wajar. Hindari orbit 360 derajat yang terlalu cepat atau gerakan ekstrem yang dapat menyebabkan identity drift.
-- Jangan memaksakan aksi penggunaan jika mekanisme atau aksesori yang diperlukan tidak terlihat jelas pada reference image. Jika demonstrasi tidak dapat dipastikan dari screenshot, gunakan cinematic product interaction yang hanya melibatkan bagian yang terlihat.
-- Setiap scene harus terasa sebagai kelanjutan scene sebelumnya, bukan enam klip yang terpisah.
-- Total durasi tepat 12 detik.
-- Output video final 9:16.
-- Gaya visual: clean commercial product advertisement, realistic, premium, cinematic lighting, sharp product details.
-- Prioritaskan produk tetap konsisten sepanjang video dan jangan membuat klaim fungsi yang tidak dapat didukung oleh reference image.
+REFERENCE-GROUNDED ANALYSIS — DO THIS BEFORE WRITING THE MASTER PROMPT:
+1. Identify what product/category is actually visible in the CURRENT screenshot.
+2. Separate clearly visible facts from uncertain or hidden details.
+3. Treat the CURRENT screenshot as the only source of truth for product identity. Do not use knowledge of similar products, remembered examples, brand catalogs, or assumptions from previous requests.
+4. Identify only features that are visibly present or reliably identifiable from the CURRENT screenshot: shape, proportions, colors, printed markings/branding, materials, textures, controls, connectors, openings, accessories, and other physical details.
+5. If a feature is ambiguous, partially hidden, too small to read, or not visible, DO NOT turn it into a factual claim.
+6. Never invent internal components, hidden mechanisms, accessories, colors, materials, functions, specifications, dimensions, or use cases.
+7. Before finalizing, mentally audit every specific noun and every claimed product feature in the master prompt against the CURRENT screenshot. Remove anything that is not supported by the CURRENT screenshot.
 
-Keluarkan HANYA satu MASTER PROMPT dalam bahasa Inggris. Jangan keluarkan storyboard JSON, tabel, atau enam gambar. Master prompt harus sudah memuat seluruh urutan 6 scene, timing 0-12 detik, instruksi membersihkan screenshot, konsistensi produk, gerakan kamera, dan spesifikasi 9:16.`;
+VIDEO STRUCTURE:
+Create ONE continuous 12-second sequence with 6 connected scenes, approximately 2 seconds each:
+SCENE 1 00:00-00:02 — hook/opening
+SCENE 2 00:02-00:04 — product reveal
+SCENE 3 00:04-00:06 — use/demo ONLY IF a safe, clearly supported interaction is visible or reliably inferable from the current reference; otherwise use a cinematic product movement/detail reveal
+SCENE 4 00:06-00:08 — key visible feature/benefit ONLY IF supported by the current reference; otherwise use another grounded detail reveal
+SCENE 5 00:08-00:10 — product detail / macro close-up
+SCENE 6 00:10-00:12 — hero / closing
+
+SCENE SAFETY RULE:
+Do NOT force a usage demonstration. If the screenshot does not clearly support how the product is used, do not invent another device, a person's hands, a hidden mechanism, an attachment, a flame, liquid, food, charging action, opening/closing mechanism, or any other interaction. Replace the unsupported action with controlled camera movement, lighting, rotation, texture/detail reveal, or a close-up of visible product features.
+
+GOOGLE FLOW INSTRUCTIONS TO INCLUDE:
+- Use the CURRENT reference screenshot as the sole identity reference from first frame to last frame.
+- Clean the source screenshot by removing marketplace UI, status bars, price, ratings, seller information, shopping buttons, menus, notifications, unrelated overlay graphics, and marketplace watermarks.
+- Preserve the actual product identity. Do not redesign, replace, merge, duplicate, or morph the product.
+- Preserve only the physical characteristics supported by the CURRENT screenshot.
+- If the source background is unsuitable, create a clean realistic background while keeping the product unchanged.
+- No random text, generated branding, extra logos, watermarks, or visual artifacts.
+- Use realistic commercial lighting, reflections, depth of field, and physically plausible camera movement.
+- Prefer controlled push-in, pan, tilt, partial orbit, rack focus, macro close-up, gentle rotation, or pull-back. Avoid aggressive 360-degree or extreme camera movement that can cause identity drift.
+- Maintain spatial and visual continuity between scenes so the six scenes feel like one continuous advertisement.
+- Do not make unsupported functional, technical, safety, performance, or material claims.
+- If a detail cannot be verified from the CURRENT screenshot, omit it rather than guess.
+- Avoid unsupported “benefit” language; show a visible feature instead.
+- Do not add a second product or unrelated object merely to create a demonstration.
+- Keep the same product scale, proportions, color identity, and visible markings throughout the sequence.
+- Native vertical 9:16.
+- Total duration exactly 12 seconds.
+- Style: realistic, premium, clean commercial product advertisement, cinematic lighting, sharp product detail, stable product identity.
+- Do not use “8K” as a requirement; prioritize photorealism, detail, continuity, and fidelity to the reference.
+
+OUTPUT RULE:
+Return ONLY ONE MASTER PROMPT in English. Do not return analysis, notes, JSON, tables, explanations, alternative prompts, or images. The master prompt itself must contain the complete 6-scene timeline from 00:00 to 00:12, the reference-grounded product description, screenshot-cleanup instructions, continuity rules, camera movement, and 9:16/12-second specifications.
+
+FINAL SELF-CHECK BEFORE OUTPUT:
+Ask internally: “Could every specific product feature and every physical interaction in this prompt be verified from the CURRENT screenshot?” If not, delete or neutralize that detail. The prompt must be reusable for completely different product screenshots and must never be biased toward any example product.`;
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
@@ -86,8 +106,6 @@ async function callGemini(key){
   const base64=sourceDataUrl.split(',')[1];
   const mime=sourceDataUrl.slice(5,sourceDataUrl.indexOf(';'));
 
-  // Google now recommends Interactions API for new Gemini integrations.
-  // Try current stable Flash models in order; do not keep hammering one overloaded model.
   const models=['gemini-3.8-flash','gemini-3.7-flash','gemini-3.6-flash','gemini-3.5-flash-lite'];
   let last='Gemini tidak dapat membuat master prompt.';
 
@@ -104,19 +122,10 @@ async function callGemini(key){
             model,
             store:false,
             input:[
-              {
-                type:'image',
-                mime_type:mime,
-                data:base64
-              },
-              {
-                type:'text',
-                text:storyboardInstruction()
-              }
+              {type:'image',mime_type:mime,data:base64},
+              {type:'text',text:storyboardInstruction()}
             ],
-            generation_config:{
-              max_output_tokens:4096
-            }
+            generation_config:{max_output_tokens:4096}
           }),
           signal:ctl.signal
         });
@@ -143,15 +152,9 @@ async function callGemini(key){
 
       const msg=data?.error?.message||('HTTP '+res.status+' dari Gemini '+model+'.');
       last=msg;
-
-      // 400/401/403/404 are configuration/auth/model errors; continuing to another
-      // model will not reliably fix the key, so surface the exact error.
       if([400,401,403,404].includes(res.status))throw Error(msg);
 
-      // 429/500/502/503/504 can be transient. Respect Retry-After when supplied,
-      // but only retry once so the browser does not hammer an overloaded service.
-      const retryable=[429,500,502,503,504].includes(res.status);
-      if(retryable){
+      if([429,500,502,503,504].includes(res.status)){
         const retryAfter=Number(res.headers.get('retry-after'));
         const waitMs=Number.isFinite(retryAfter)&&retryAfter>0
           ?Math.min(retryAfter*1000,15000)
