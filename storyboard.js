@@ -261,15 +261,16 @@ async function generateStoryboard(){
         storyboard.scenes[i].imageDataUrl=await generateCleanSceneImage(key,storyboard.scenes[i]);
       }catch(imageErr){
         console.warn(imageErr);
-        storyboard.scenes[i].imageDataUrl=sourceDataUrl;
+        storyboard.scenes[i].imageDataUrl='';
         storyboard.scenes[i].imageFallback=true;
+        storyboard.scenes[i].imageError=imageErr?.message || 'Image generation gagal.';
       }
       renderStoryboard();
     }
 
     const fallbackCount=storyboard.scenes.filter(s=>s.imageFallback).length;
     setStoryStatus(fallbackCount
-      ? 'Storyboard selesai. '+fallbackCount+' visual memakai screenshot referensi karena image generation gagal.'
+      ? 'Storyboard selesai, tetapi '+fallbackCount+' visual belum dibuat. Screenshot marketplace TIDAK dipakai sebagai fallback agar hasil tetap bersih.'
       : 'Storyboard 6 scene selesai dengan visual bersih 9:16.');
   }catch(err){
     console.error(err);
@@ -290,7 +291,7 @@ function renderStoryboard(){
     return `
     <article class="scene-card">
       <div class="scene-top"><span>SCENE ${escapeHtml(s.scene)}</span><span>${escapeHtml(s.duration)}</span></div>
-      <img class="scene-image" src="${img}" alt="Visual bersih scene">
+      ${img ? `<img class="scene-image" src="${img}" alt="Visual bersih scene">` : `<div class="scene-image scene-image-missing">Visual scene belum berhasil dibuat.<br><small>Screenshot marketplace tidak digunakan sebagai fallback.</small></div>`}
       <div class="scene-label">Visual</div>
       <div class="scene-desc">${escapeHtml(s.visual)}</div>
       <div class="scene-label">Gerakan</div>
