@@ -10,6 +10,8 @@ const sheet = document.querySelector('#storyboardSheet');
 
 let sourceDataUrl = '';
 let storyboard = null;
+let storyTimerId = null;
+let storyStartedAt = 0;
 
 const saveKeyBtn = document.querySelector('#saveGeminiKey');
 const keySaveStatus = document.querySelector('#keySaveStatus');
@@ -76,7 +78,10 @@ saveKeyBtn?.addEventListener('click', saveGeminiKey);
 
 keyEl.addEventListener('change', saveGeminiKey);
 
-function setStoryStatus(t){ storyStatus.textContent = t; }
+function formatElapsed(ms){ const s=Math.floor(ms/1000); const m=Math.floor(s/60); return String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+function startStoryTimer(){ clearInterval(storyTimerId); storyStartedAt=Date.now(); storyTimerId=setInterval(()=>updateProgress(),250); updateProgress(); }
+function stopStoryTimer(){ clearInterval(storyTimerId); storyTimerId=null; updateProgress(); }
+function updateProgress(sceneCurrent=0, phase=''){ const elapsed=storyStartedAt?formatElapsed(Date.now()-storyStartedAt):'00:00'; const total=6; const current=Math.max(0,Math.min(total,sceneCurrent)); const phaseText=phase?` · ${phase}`:''; storyStatus.textContent=`Waktu ${elapsed} · Scene ${current}/${total}${phaseText}`; }
 
 function fileToDataUrl(file){
   return new Promise((resolve,reject)=>{
@@ -262,7 +267,8 @@ async function generateStoryboard(){
   }
   localStorage.setItem('iwan_gemini_api_key',key);
   generateBtn.disabled=true;
-  setStoryStatus('Gemini sedang membaca screenshot dan menyusun 6 scene…');
+  startStoryTimer();
+  updateProgress(0,'membaca screenshot & menyusun storyboard');
   try{
     storyboard=await geminiTextStoryboard(key);
     storyboard.scenes=Array.isArray(storyboard.scenes)?storyboard.scenes.slice(0,6):[];
@@ -272,7 +278,7 @@ async function generateStoryboard(){
     renderStoryboard();
 
     for(let i=0;i<storyboard.scenes.length;i++){
-      setStoryStatus('Membuat visual bersih Scene '+(i+1)+' dari 6…');
+      updateProgress(i,'membuat visual bersih');
       try{
         storyboard.scenes[i].imageDataUrl=await generateCleanSceneImage(key,storyboard.scenes[i]);
       }catch(imageErr){
@@ -285,12 +291,15 @@ async function generateStoryboard(){
     }
 
     const fallbackCount=storyboard.scenes.filter(s=>s.imageFallback).length;
+    stopStoryTimer();
+    const finalTime=formatElapsed(Date.now()-storyStartedAt);
     setStoryStatus(fallbackCount
-      ? 'Storyboard selesai, tetapi '+fallbackCount+' visual belum berhasil dibuat. Screenshot marketplace TIDAK ditampilkan sebagai fallback.'
-      : 'Storyboard 6 scene selesai dengan visual bersih 9:16.');
+      ? `Selesai ${finalTime} · Scene 6/6 · ${fallbackCount} visual belum berhasil dibuat. Screenshot marketplace tidak ditampilkan sebagai fallback.`
+      : `Selesai ${finalTime} · Scene 6/6 · Storyboard 6 scene selesai dengan visual bersih 9:16.`);
   }catch(err){
     console.error(err);
-    setStoryStatus('Gagal membuat storyboard: '+(err.message||err));
+    stopStoryTimer();
+    setStoryStatus(`Gagal setelah ${formatElapsed(Date.now()-storyStartedAt)} · ${err.message||err}`);
   }finally{
     generateBtn.disabled=false;
   }
