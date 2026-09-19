@@ -55,8 +55,8 @@ function storyboardInstruction(){
   const duration=flowDurationEl?.value||'8';
   const is8=duration==='8';
   const timeline=is8
-    ? `Create ONE continuous ${duration}-second sequence with 6 connected beats/scenes compressed naturally across the full duration. Approximate timing: SCENE 1 00:00-00:01.33 — hook/opening; SCENE 2 00:01.33-00:02.67 — product reveal; SCENE 3 00:02.67-00:04.00 — use/demo ONLY IF clearly supported, otherwise detail movement; SCENE 4 00:04.00-00:05.33 — visible feature/detail; SCENE 5 00:05.33-00:06.67 — macro detail; SCENE 6 00:06.67-00:08.00 — hero closing. Do not force hard cuts if they harm continuity; make the six beats flow as one continuous commercial.`
-    : `Create ONE continuous ${duration}-second sequence with 6 connected scenes, approximately 2 seconds each: SCENE 1 00:00-00:02 — hook/opening; SCENE 2 00:02-00:04 — product reveal; SCENE 3 00:04-00:06 — use/demo ONLY IF clearly supported, otherwise detail movement; SCENE 4 00:06-00:08 — visible feature/detail; SCENE 5 00:08-00:10 — macro detail; SCENE 6 00:10-00:12 — hero closing.`;
+    ? `Create SIX DISTINCT SHOTS inside ONE ${duration}-second video. This is a shot-based commercial, NOT one continuous camera take. Use clear visual transitions/hard cuts so all 6 shots are actually perceptible: SHOT 1 00:00-00:01.33 — opening hook; SHOT 2 00:01.33-00:02.67 — clear product reveal; SHOT 3 00:02.67-00:04.00 — visible use/demo ONLY IF directly supported by the reference, otherwise a feature/detail reveal; SHOT 4 00:04.00-00:05.33 — explain/show one clearly visible feature or marking; SHOT 5 00:05.33-00:06.67 — macro detail/material/texture reveal; SHOT 6 00:06.67-00:08.00 — final hero shot. Each shot must have a distinct framing, camera action, or visual purpose. Do not merge the six shots into one orbit or one uninterrupted rotation. The six shots must all be visibly represented within the full ${duration} seconds.`
+    : `Create SIX DISTINCT SHOTS inside ONE ${duration}-second video. This is a shot-based commercial, not one continuous camera take. Use clear visual transitions/hard cuts so all 6 shots are perceptible: SHOT 1 00:00-00:02 — opening hook; SHOT 2 00:02-00:04 — product reveal; SHOT 3 00:04-00:06 — visible use/demo ONLY IF directly supported, otherwise feature/detail reveal; SHOT 4 00:06-00:08 — visible feature/marking; SHOT 5 00:08-00:10 — macro detail; SHOT 6 00:10-00:12 — final hero shot. Each shot must have a distinct framing, camera action, or visual purpose.`;
 return `Analyze ONLY the single product screenshot attached to this request. This instruction is a GENERAL PRODUCTION RULE for ANY future product screenshot, not a template for one example product. Never assume the product is a lighter, electronics accessory, pump, beauty item, food item, tool, or any other specific category unless the current reference image clearly shows that category.
 
 Console 2 does NOT create, edit, or download images. Your ONLY task is to produce ONE MASTER PROMPT TEXT that the user can paste directly into Google Flow.
@@ -87,8 +87,8 @@ GOOGLE FLOW INSTRUCTIONS TO INCLUDE:
 - No random text, generated branding, extra logos, watermarks, or visual artifacts.
 - Use realistic commercial lighting, reflections, depth of field, and physically plausible camera movement.
 - Prefer controlled push-in, pan, tilt, partial orbit, rack focus, macro close-up, gentle rotation, or pull-back. Avoid aggressive 360-degree or extreme camera movement that can cause identity drift.
-- Maintain spatial and visual continuity between scenes so the six scenes feel like one continuous advertisement.
-- Do not make unsupported functional, technical, safety, performance, or material claims.
+- Maintain product identity and visual continuity between shots, but DO NOT make the six shots look like one uninterrupted camera move. Each shot must be a visibly separate commercial beat.
+- Do not make unsupported functional, technical, safety, performance, or material claims.\n- The sequence must visually communicate what the product is and what can be verified about it; do not spend the whole video merely rotating the object.\n- Shots 2–5 must deliberately reveal different visible product information rather than repeating the same orbit.
 - If a detail cannot be verified from the CURRENT screenshot, omit it rather than guess.
 - Avoid unsupported “benefit” language; show a visible feature instead.
 - Do not add a second product or unrelated object merely to create a demonstration.
@@ -99,7 +99,7 @@ GOOGLE FLOW INSTRUCTIONS TO INCLUDE:
 - Do not use “8K” as a requirement; prioritize photorealism, detail, continuity, and fidelity to the reference.
 
 OUTPUT RULE:
-Return ONLY ONE MASTER PROMPT in English. Do not return analysis, notes, JSON, tables, explanations, alternative prompts, or images. The master prompt itself must contain the complete 6-scene timeline matching the selected duration, the reference-grounded product description, screenshot-cleanup instructions, continuity rules, camera movement, and 9:16/12-second specifications.
+Return ONLY ONE MASTER PROMPT in English. Do not return analysis, notes, JSON, tables, explanations, alternative prompts, or images. The master prompt itself must contain the complete 6-shot timeline matching the selected duration, the reference-grounded product description, screenshot-cleanup instructions, continuity rules, camera movement, and 9:16/12-second specifications.
 
 FINAL SELF-CHECK BEFORE OUTPUT:
 Ask internally: “Could every specific product feature and every physical interaction in this prompt be verified from the CURRENT screenshot?” If not, delete or neutralize that detail. The prompt must be reusable for completely different product screenshots and must never be biased toward any example product.`;
