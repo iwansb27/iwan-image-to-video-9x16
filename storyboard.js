@@ -189,18 +189,3 @@ copyMasterBtn?.addEventListener('click',async()=>{
   setStoryStatus('✓ Master Prompt sudah di-copy.');
 });
 
-function download(){
-  if(!storyboard){setStoryStatus('Buat storyboard terlebih dahulu.');return}
-  const html='<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+
-    esc(storyboard.title||'Storyboard 6 Scene')+
-    '</title><style>body{font-family:Arial;background:#eee;padding:20px;color:#111}.sheet{max-width:1100px;margin:auto;background:#fff;padding:20px}.scenes{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.card{border:1px solid #ccc;border-radius:10px;padding:10px}.card img{width:100%;aspect-ratio:9/16;object-fit:cover;border-radius:7px}.top{display:flex;justify-content:space-between;font-weight:bold}.label{font-size:10px;font-weight:bold;color:#666;margin-top:7px}.desc{font-size:11px}.prompt,.master p{font:10px/1.4 monospace;white-space:pre-wrap;background:#f1f1f1;padding:7px;border-radius:6px}.master{margin-top:12px;border:1px solid #ccc;padding:10px}@media(max-width:700px){.scenes{grid-template-columns:1fr}}</style></head><body><main class="sheet"><h1>'+
-    esc(storyboard.title||'Storyboard 6 Scene')+
-    '</h1><p>9:16 · 1 REFERENCE IMAGE · GOOGLE FLOW</p><section class="scenes">'+
-    storyboard.scenes.map(s=>'<article class="card"><div class="top"><span>SCENE '+esc(s.scene)+'</span><span>'+esc(s.duration)+'</span></div><img src="'+sourceDataUrl+'" alt="Reference produk"><div class="label">Visual</div><div class="desc">'+esc(s.visual)+'</div><div class="label">Gerakan</div><div class="desc">'+esc(s.motion)+'</div><div class="label">Prompt Google Flow</div><div class="prompt">'+esc(s.prompt)+'</div></article>').join('')+
-    '</section><section class="master"><h3>MASTER PROMPT — GOOGLE FLOW</h3><p>'+esc(storyboard.master_prompt||'')+'</p></section></main></body></html>';
-  const url=URL.createObjectURL(new Blob([html],{type:'text/html'}));
-  const a=document.createElement('a');a.href=url;a.download='iwan-storyboard-6-scene.html';a.click();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
-  setStoryStatus('✓ Storyboard sudah di-download.');
-}
-downloadBtn?.addEventListener('click',download);
