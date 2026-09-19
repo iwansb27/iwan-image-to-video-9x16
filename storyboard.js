@@ -3,6 +3,7 @@ const storyDrop=document.querySelector('#storyDrop');
 const keyEl=document.querySelector('#geminiKey');
 const generateBtn=document.querySelector('#generateStoryboard');
 const copyMasterBtn=document.querySelector('#copyMasterPrompt');
+const flowDurationEl=document.querySelector('#flowDuration');
 const storyStatus=document.querySelector('#storyStatus');
 const sheet=document.querySelector('#storyboardSheet');
 const saveKeyBtn=document.querySelector('#saveGeminiKey');
@@ -39,18 +40,23 @@ saveKeyBtn?.addEventListener('click',saveKey);
 async function setSource(file){
   if(!file||!file.type.startsWith('image/'))return;
   sourceDataUrl=await fileToDataUrl(file);
-  setStoryStatus('Gambar referensi siap. Klik “Buat Prompt 6 Scene · 12 Detik”.');
+  setStoryStatus('Gambar referensi siap. Pilih durasi Google Flow, lalu buat prompt.');
 }
 storyImageEl?.addEventListener('change',e=>setSource(e.target.files?.[0]));
 storyDrop?.addEventListener('dragover',e=>e.preventDefault());
 storyDrop?.addEventListener('drop',async e=>{e.preventDefault();await setSource(e.dataTransfer.files?.[0])});
 
 function storyboardInstruction(){
+  const duration=flowDurationEl?.value||'8';
+  const is8=duration==='8';
+  const timeline=is8
+    ? `Create ONE continuous ${duration}-second sequence with 6 connected beats/scenes compressed naturally across the full duration. Approximate timing: SCENE 1 00:00-00:01.33 — hook/opening; SCENE 2 00:01.33-00:02.67 — product reveal; SCENE 3 00:02.67-00:04.00 — use/demo ONLY IF clearly supported, otherwise detail movement; SCENE 4 00:04.00-00:05.33 — visible feature/detail; SCENE 5 00:05.33-00:06.67 — macro detail; SCENE 6 00:06.67-00:08.00 — hero closing. Do not force hard cuts if they harm continuity; make the six beats flow as one continuous commercial.`
+    : `Create ONE continuous ${duration}-second sequence with 6 connected scenes, approximately 2 seconds each: SCENE 1 00:00-00:02 — hook/opening; SCENE 2 00:02-00:04 — product reveal; SCENE 3 00:04-00:06 — use/demo ONLY IF clearly supported, otherwise detail movement; SCENE 4 00:06-00:08 — visible feature/detail; SCENE 5 00:08-00:10 — macro detail; SCENE 6 00:10-00:12 — hero closing.`;
 return `Analyze ONLY the single product screenshot attached to this request. This instruction is a GENERAL PRODUCTION RULE for ANY future product screenshot, not a template for one example product. Never assume the product is a lighter, electronics accessory, pump, beauty item, food item, tool, or any other specific category unless the current reference image clearly shows that category.
 
 Console 2 does NOT create, edit, or download images. Your ONLY task is to produce ONE MASTER PROMPT TEXT that the user can paste directly into Google Flow.
 
-Google Flow will receive the SAME CURRENT screenshot as its reference image. The master prompt must tell Google Flow how to turn that current reference into one clean, realistic, cinematic product advertisement in native vertical 9:16 with TOTAL duration exactly 12 SECONDS.
+Google Flow will receive the SAME CURRENT screenshot as its reference image. The master prompt must tell Google Flow how to turn that current reference into one clean, realistic, cinematic product advertisement in native vertical 9:16 with TOTAL duration exactly ${duration} SECONDS.
 
 REFERENCE-GROUNDED ANALYSIS — DO THIS BEFORE WRITING THE MASTER PROMPT:
 1. Identify what product/category is actually visible in the CURRENT screenshot.
@@ -62,13 +68,7 @@ REFERENCE-GROUNDED ANALYSIS — DO THIS BEFORE WRITING THE MASTER PROMPT:
 7. Before finalizing, mentally audit every specific noun and every claimed product feature in the master prompt against the CURRENT screenshot. Remove anything that is not supported by the CURRENT screenshot.
 
 VIDEO STRUCTURE:
-Create ONE continuous 12-second sequence with 6 connected scenes, approximately 2 seconds each:
-SCENE 1 00:00-00:02 — hook/opening
-SCENE 2 00:02-00:04 — product reveal
-SCENE 3 00:04-00:06 — use/demo ONLY IF a safe, clearly supported interaction is visible or reliably inferable from the current reference; otherwise use a cinematic product movement/detail reveal
-SCENE 4 00:06-00:08 — key visible feature/benefit ONLY IF supported by the current reference; otherwise use another grounded detail reveal
-SCENE 5 00:08-00:10 — product detail / macro close-up
-SCENE 6 00:10-00:12 — hero / closing
+${timeline}
 
 SCENE SAFETY RULE:
 Do NOT force a usage demonstration. If the screenshot does not clearly support how the product is used, do not invent another device, a person's hands, a hidden mechanism, an attachment, a flame, liquid, food, charging action, opening/closing mechanism, or any other interaction. Replace the unsupported action with controlled camera movement, lighting, rotation, texture/detail reveal, or a close-up of visible product features.
@@ -89,12 +89,12 @@ GOOGLE FLOW INSTRUCTIONS TO INCLUDE:
 - Do not add a second product or unrelated object merely to create a demonstration.
 - Keep the same product scale, proportions, color identity, and visible markings throughout the sequence.
 - Native vertical 9:16.
-- Total duration exactly 12 seconds.
+- Total duration exactly ${duration} seconds. Follow the selected duration; do not claim 12 seconds when the selected platform mode is 8 seconds.
 - Style: realistic, premium, clean commercial product advertisement, cinematic lighting, sharp product detail, stable product identity.
 - Do not use “8K” as a requirement; prioritize photorealism, detail, continuity, and fidelity to the reference.
 
 OUTPUT RULE:
-Return ONLY ONE MASTER PROMPT in English. Do not return analysis, notes, JSON, tables, explanations, alternative prompts, or images. The master prompt itself must contain the complete 6-scene timeline from 00:00 to 00:12, the reference-grounded product description, screenshot-cleanup instructions, continuity rules, camera movement, and 9:16/12-second specifications.
+Return ONLY ONE MASTER PROMPT in English. Do not return analysis, notes, JSON, tables, explanations, alternative prompts, or images. The master prompt itself must contain the complete 6-scene timeline matching the selected duration, the reference-grounded product description, screenshot-cleanup instructions, continuity rules, camera movement, and 9:16/12-second specifications.
 
 FINAL SELF-CHECK BEFORE OUTPUT:
 Ask internally: “Could every specific product feature and every physical interaction in this prompt be verified from the CURRENT screenshot?” If not, delete or neutralize that detail. The prompt must be reusable for completely different product screenshots and must never be biased toward any example product.`;
@@ -177,7 +177,7 @@ function esc(v=''){
 }
 
 function render(){
-  sheet.innerHTML='<div class="story-title">MASTER PROMPT — GOOGLE FLOW</div><div class="story-format">9:16 · 6 SCENE · 12 DETIK</div><pre class="master-prompt">'+esc(masterPrompt)+'</pre>';
+  const d=flowDurationEl?.value||'8'; sheet.innerHTML='<div class="story-title">MASTER PROMPT — GOOGLE FLOW</div><div class="story-format">9:16 · 6 SCENE · '+d+' DETIK</div><pre class="master-prompt">'+esc(masterPrompt)+'</pre>';
 }
 
 async function generate(){
@@ -190,7 +190,7 @@ async function generate(){
   try{
     masterPrompt=await callGemini(key);
     render();
-    setStoryStatus('✓ Master Prompt 6 scene · 12 detik siap di-copy ke Google Flow.');
+    setStoryStatus('✓ Master Prompt 6 scene · durasi sesuai mode Google Flow siap di-copy.');
   }catch(e){
     setStoryStatus('Gagal: '+(e.message||e));
   }finally{generateBtn.disabled=false}
