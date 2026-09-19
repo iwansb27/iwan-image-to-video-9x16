@@ -148,22 +148,25 @@ async function geminiTextStoryboard(key){
   const base64=sourceDataUrl.split(',')[1];
   const mime=sourceDataUrl.slice(5,sourceDataUrl.indexOf(';'));
   const body={
-    contents:[{
-      parts:[
-        {text:promptForGemini()},
-        {inline_data:{mime_type:mime,data:base64}}
-      ]
-    }],
-    generationConfig:{temperature:0.7,responseMimeType:'application/json'}
+    model:'gemini-3.6-flash',
+    input:[
+      {type:'image',mime_type:mime,data:base64},
+      {type:'text',text:promptForGemini()}
+    ],
+    response_format:{
+      type:'text',
+      mime_type:'application/json'
+    }
   };
-  const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+encodeURIComponent(key),{
+  const res=await fetch('https://generativelanguage.googleapis.com/v1beta/interactions?key='+encodeURIComponent(key),{
     method:'POST',
-    headers:{'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json','x-goog-api-key':key},
     body:JSON.stringify(body)
   });
   const data=await res.json();
-  if(!res.ok) throw new Error(data?.error?.message || 'Gemini storyboard API gagal.');
-  const text=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('') || '';
+  if(!res.ok) throw new Error(data?.error?.message || 'Gemini Interactions API gagal.');
+  const text=data?.steps?.filter(s=>s.type==='model_output')?.flatMap(s=>s.content||[]).filter(p=>p.type==='text').map(p=>p.text||'').join('') || '';
+  if(!text) throw new Error('Gemini tidak mengembalikan teks storyboard.');
   return extractJson(text);
 }
 
