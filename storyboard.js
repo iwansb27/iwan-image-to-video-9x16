@@ -1,17 +1,15 @@
 const storyImageEl=document.querySelector('#storyImage');
-const storyPreview=document.querySelector('#storySourcePreview');
 const storyDrop=document.querySelector('#storyDrop');
 const keyEl=document.querySelector('#geminiKey');
 const generateBtn=document.querySelector('#generateStoryboard');
 const copyMasterBtn=document.querySelector('#copyMasterPrompt');
-const downloadBtn=document.querySelector('#downloadStoryboard');
 const storyStatus=document.querySelector('#storyStatus');
 const sheet=document.querySelector('#storyboardSheet');
 const saveKeyBtn=document.querySelector('#saveGeminiKey');
 const keySaveStatus=document.querySelector('#keySaveStatus');
 
 let sourceDataUrl='';
-let storyboard=null;
+let masterPrompt='';
 
 function setStoryStatus(t){if(storyStatus)storyStatus.textContent=t}
 function fileToDataUrl(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)})}
@@ -41,20 +39,11 @@ saveKeyBtn?.addEventListener('click',saveKey);
 async function setSource(file){
   if(!file||!file.type.startsWith('image/'))return;
   sourceDataUrl=await fileToDataUrl(file);
-  storyPreview.src=sourceDataUrl;
-  storyPreview.hidden=false;
-  setStoryStatus('Gambar referensi siap. Klik “Buat Storyboard 6 Scene”.');
+  setStoryStatus('Gambar referensi siap. Klik “Buat Prompt 6 Scene · 12 Detik”.');
 }
 storyImageEl?.addEventListener('change',e=>setSource(e.target.files?.[0]));
 storyDrop?.addEventListener('dragover',e=>e.preventDefault());
 storyDrop?.addEventListener('drop',async e=>{e.preventDefault();await setSource(e.dataTransfer.files?.[0])});
-
-function extractJson(t){
-  const c=t.replace(/\`\`\`json/gi,'').replace(/\`\`\`/g,'').trim();
-  const a=c.indexOf('{'),b=c.lastIndexOf('}');
-  if(a<0||b<0)throw Error('Gemini tidak mengembalikan JSON storyboard.');
-  return JSON.parse(c.slice(a,b+1));
-}
 
 function storyboardInstruction(){
 return `Analisis SATU screenshot produk yang saya kirim. Console ini TIDAK membuat atau men-download gambar. Tugasmu HANYA membuat SATU MASTER PROMPT TEKS yang siap ditempel langsung ke Google Flow.
@@ -93,7 +82,7 @@ async function callGemini(key){
   const base64=sourceDataUrl.split(',')[1];
   const mime=sourceDataUrl.slice(5,sourceDataUrl.indexOf(';'));
   const models=['gemini-3.8-flash','gemini-2.5-flash'];
-  let last='Gemini gagal memproses storyboard.';
+  let last='Gemini gagal membuat master prompt.';
   for(const model of models){
     try{
       const ctl=new AbortController();
@@ -104,25 +93,20 @@ async function callGemini(key){
           method:'POST',
           headers:{'Content-Type':'application/json','x-goog-api-key':key},
           body:JSON.stringify({
-            contents:[{
-              parts:[
-                {inline_data:{mime_type:mime,data:base64}},
-                {text:storyboardInstruction()}
-              ]
-            }],
-            generationConfig:{
-              response_mime_type:'application/json',
-              temperature:0.35
-            }
+            contents:[{parts:[
+              {inline_data:{mime_type:mime,data:base64}},
+              {text:storyboardInstruction()}
+            ]}],
+            generationConfig:{temperature:0.35}
           }),
           signal:ctl.signal
         });
       }finally{clearTimeout(tid)}
       const data=await res.json();
       if(res.ok){
-        const text=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'';
-        if(!text)throw Error('Gemini tidak mengembalikan isi storyboard.');
-        return extractJson(text);
+        const text=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('').trim()||'';
+        if(!text)throw Error('Gemini tidak mengembalikan master prompt.');
+        return text;
       }
       last=data?.error?.message||('Gemini gagal pada '+model+'.');
       if(res.status!==429&&res.status<500)throw Error(last);
@@ -134,27 +118,11 @@ async function callGemini(key){
 }
 
 function esc(v=''){
-  return String(v).replace(/[&<>\\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\':'&quot;',"'":'&#039;'}[c]));
+  return String(v).replace(/[&<>\\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\':'&quot;','"':'&quot;'}[c]));
 }
 
 function render(){
-  const scenes=(storyboard?.scenes||[]).slice(0,6);
-  sheet.innerHTML=
-    '<div class="story-title">'+esc(storyboard?.title||'Storyboard 6 Scene')+'</div>'+
-    '<div class="story-format">9:16 · 1 REFERENCE IMAGE · 6 PROMPT GOOGLE FLOW</div>'+
-    '<div class="story-scenes">'+
-    scenes.map(s=>
-      '<article class="scene-card">'+
-      '<div class="scene-top"><span>SCENE '+esc(s.scene)+'</span><span>'+esc(s.duration)+'</span></div>'+
-      '<img class="scene-image" src="'+sourceDataUrl+'" alt="Reference produk">'+
-      '<div class="scene-reference-note">REFERENCE YANG SAMA · JANGAN REDESIGN PRODUK</div>'+
-      '<div class="scene-label">Visual</div><div class="scene-desc">'+esc(s.visual)+'</div>'+
-      '<div class="scene-label">Gerakan</div><div class="scene-desc">'+esc(s.motion)+'</div>'+
-      '<div class="scene-label">Prompt Google Flow</div><div class="scene-prompt">'+esc(s.prompt)+'</div>'+
-      '</article>'
-    ).join('')+
-    '</div>'+
-    '<div class="master-box"><h3>MASTER PROMPT — GOOGLE FLOW</h3><p>'+esc(storyboard?.master_prompt||'')+'</p></div>';
+  sheet.innerHTML='<div class="story-title">MASTER PROMPT — GOOGLE FLOW</div><div class="story-format">9:16 · 6 SCENE · 12 DETIK</div><pre class="master-prompt">'+esc(masterPrompt)+'</pre>';
 }
 
 async function generate(){
@@ -163,19 +131,11 @@ async function generate(){
   if(!key){setStoryStatus('Masukkan API key Gemini terlebih dahulu.');keyEl?.focus();return}
   localStorage.setItem('iwan_gemini_api_key',key);
   generateBtn.disabled=true;
-  setStoryStatus('Gemini sedang membaca gambar dan menyusun 6 scene…');
+  setStoryStatus('Gemini sedang membaca gambar dan menyusun master prompt 6 scene…');
   try{
-    storyboard=await callGemini(key);
-    if(!Array.isArray(storyboard.scenes)||storyboard.scenes.length!==6)throw Error('Storyboard tidak berisi tepat 6 scene.');
-    storyboard.scenes=storyboard.scenes.map((s,i)=>({
-      scene:i+1,
-      duration:s.duration||((i*3)+'-'+((i+1)*3)+'s'),
-      visual:s.visual||'',
-      motion:s.motion||'',
-      prompt:s.prompt||''
-    }));
+    masterPrompt=await callGemini(key);
     render();
-    setStoryStatus('✓ Storyboard 6 scene selesai. Prompt siap dipakai di Google Flow.');
+    setStoryStatus('✓ Master Prompt 6 scene · 12 detik siap di-copy ke Google Flow.');
   }catch(e){
     setStoryStatus('Gagal: '+(e.message||e));
   }finally{generateBtn.disabled=false}
@@ -184,8 +144,7 @@ async function generate(){
 generateBtn?.addEventListener('click',generate);
 
 copyMasterBtn?.addEventListener('click',async()=>{
-  if(!storyboard?.master_prompt){setStoryStatus('Buat storyboard terlebih dahulu.');return}
-  await navigator.clipboard.writeText(storyboard.master_prompt);
-  setStoryStatus('✓ Master Prompt sudah di-copy.');
+  if(!masterPrompt){setStoryStatus('Buat prompt terlebih dahulu.');return}
+  await navigator.clipboard.writeText(masterPrompt);
+  setStoryStatus('✓ Master Prompt sudah di-copy untuk Google Flow.');
 });
-
