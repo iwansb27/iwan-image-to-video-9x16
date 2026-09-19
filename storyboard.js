@@ -15,7 +15,7 @@ const saveKeyBtn = document.querySelector('#saveGeminiKey');
 const keySaveStatus = document.querySelector('#keySaveStatus');
 
 function lockGeminiKey(){
-  if(keyEl) keyEl.readOnly = true;
+  if(keyEl){ keyEl.readOnly = true; keyEl.disabled = true; }
   if(saveKeyBtn){
     saveKeyBtn.disabled = true;
     saveKeyBtn.textContent = 'API Key Tersimpan ✓';
@@ -23,7 +23,7 @@ function lockGeminiKey(){
 }
 
 function unlockGeminiKey(){
-  if(keyEl) keyEl.readOnly = false;
+  if(keyEl){ keyEl.readOnly = false; keyEl.disabled = false; }
   if(saveKeyBtn){
     saveKeyBtn.disabled = false;
     saveKeyBtn.textContent = 'Simpan API Key';
