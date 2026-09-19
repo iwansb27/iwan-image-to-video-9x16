@@ -13,6 +13,18 @@ let storyboard = null;
 
 const savedKey = localStorage.getItem('iwan_gemini_api_key') || '';
 keyEl.value = savedKey;
+const saveKeyBtn = document.querySelector('#saveGeminiKey');
+const keySaveStatus = document.querySelector('#keySaveStatus');
+
+function saveGeminiKey(){
+  const key = keyEl.value.trim();
+  if(!key){ setStoryStatus('API key Gemini masih kosong.'); keyEl.focus(); return; }
+  localStorage.setItem('iwan_gemini_api_key', key);
+  if(keySaveStatus) keySaveStatus.textContent = 'API key tersimpan di browser.';
+  setStoryStatus('API key Gemini berhasil disimpan di browser.');
+}
+saveKeyBtn?.addEventListener('click', saveGeminiKey);
+
 keyEl.addEventListener('change', () => {
   localStorage.setItem('iwan_gemini_api_key', keyEl.value.trim());
 });
