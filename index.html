@@ -16,15 +16,25 @@
       </label>
       <div class="story-preview-wrap"><img id="storySourcePreview" alt="Preview screenshot" hidden></div>
       <div class="story-key">
-        <label for="geminiKey">Gemini API Key <span>(disimpan lokal di browser)</span></label>
+        <label for="geminiKey">AI Storyboard · Gemini API Key <span>(disimpan lokal di browser)</span></label>
         <div class="story-key-row">
           <input id="geminiKey" type="password" placeholder="Masukkan API key Gemini" autocomplete="off">
-          <button id="saveGeminiKey" class="secondary" type="button">Simpan API Key</button>
+          <button id="saveGeminiKey" class="secondary" type="button">Simpan Gemini</button>
         </div>
         <small id="keySaveStatus" class="status"></small>
       </div>
+      <div class="story-key">
+        <label for="openRouterKey">AI Gambar · OpenRouter API Key <span>(disimpan lokal di browser)</span></label>
+        <div class="story-key-row">
+          <input id="openRouterKey" type="password" placeholder="Masukkan API key OpenRouter" autocomplete="off">
+          <button id="saveOpenRouterKey" class="secondary" type="button">Simpan OpenRouter</button>
+        </div>
+        <small id="openRouterKeySaveStatus" class="status"></small>
+        <small class="status">Generator gambar: Qwen Image 3 · 9:16 · OpenRouter. Model gambar Qwen bukan tier gratis.</small>
+      </div>
       <div class="story-actions">
         <button id="generateStoryboard" class="primary" type="button">Buat Storyboard 6 Scene</button>
+        <button id="generateSceneImages" class="secondary" type="button" disabled>Generate 6 Gambar</button>
         <button id="copyMasterPrompt" class="secondary" type="button">Copy Master Prompt</button>
         <button id="downloadStoryboard" class="secondary" type="button">Download Storyboard</button>
       </div>
@@ -35,4 +45,4 @@
     </div>
   </div>
 </section>
-<footer><span>Gerak utama: zoom + pan horizontal/vertikal</span><span>Rolling image: besar di atas/bawah</span></footer></main><script type="module" src="app.js"></script><script type="module" src="storyboard.js?v=9"></script></body></html>
+<footer><span>Gerak utama: zoom + pan horizontal/vertikal</span><span>Rolling image: besar di atas/bawah</span></footer></main><script type="module" src="app.js"></script><script type="module" src="storyboard.js?v=10"></script></body></html>
