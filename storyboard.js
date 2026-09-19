@@ -191,11 +191,11 @@ async function generate(){
   if(!key){setStoryStatus('Masukkan API key Gemini terlebih dahulu.');keyEl?.focus();return}
   localStorage.setItem('iwan_gemini_api_key',key);
   generateBtn.disabled=true;
-  setStoryStatus('Gemini sedang membaca gambar dan menyusun master prompt 6 scene…');
+  setStoryStatus('Gemini sedang membaca screenshot dan menyusun 6 shot yang berbeda…');
   try{
     masterPrompt=await callGemini(key);
     render();
-    setStoryStatus('✓ MASTER PROMPT 6 SHOT · 8 detik · siap langsung ke Google Flow.');
+    setStoryStatus('✓ MASTER PROMPT 6 SHOT · 8 detik · sudah diperiksa otomatis terhadap screenshot.');
   }catch(e){
     setStoryStatus('Gagal: '+(e.message||e));
   }finally{generateBtn.disabled=false}
