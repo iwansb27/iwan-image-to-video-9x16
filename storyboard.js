@@ -62,18 +62,20 @@ PENTING:
 - Jangan membuat enam gambar berbeda.
 - Jangan mengubah, mendesain ulang, atau mengganti produk.
 - Gunakan screenshot yang diberikan sebagai satu-satunya reference identitas produk dari awal sampai akhir.
-- Pertahankan bentuk, proporsi, warna, logo, material, tekstur, konektor, tombol, dan detail fisik produk.
+- Pertahankan bentuk, proporsi, warna, logo, material, tekstur, konektor, tombol, dan detail fisik produk yang benar-benar terlihat atau dapat diidentifikasi secara andal dari screenshot.
+- ATURAN ANTI-HALUSINASI: hanya deskripsikan fitur fisik, mekanisme, warna, tulisan/branding, material, aksesori, dan fungsi yang terlihat jelas atau dapat diidentifikasi secara andal dari reference image. Jangan pernah mengarang komponen tersembunyi, mekanisme internal, aksesori, branding, material, warna, atau fungsi yang tidak didukung oleh reference image.
+- Jika suatu detail tidak terlihat atau tidak pasti, jangan mengada-adakannya. Gunakan deskripsi netral seperti “the visible product detail” atau hilangkan detail tersebut.
 - Bersihkan screenshot: hilangkan status bar, marketplace UI, harga, rating, tombol belanja, seller info, menu, notifikasi, watermark marketplace, dan elemen lain yang tidak terkait produk.
 - Jika background screenshot tidak cocok, buat background produk yang bersih dan realistis tanpa mengubah produk.
 - Tidak boleh ada teks acak, logo tambahan, watermark, atau artefak.
 - Semua perubahan terjadi melalui gerakan kamera, pencahayaan, lingkungan, dan aksi yang realistis; bukan perubahan bentuk produk.
-- Gerakan harus kontinu dan masuk akal dari scene ke scene: camera push-in, pan, tilt, orbit, rack focus, close-up, pull-back, atau gerakan objek yang wajar.
-- Hindari morphing, deformasi, produk berubah bentuk, objek tambahan yang tidak masuk akal, tangan/jari cacat, dan gerakan kamera yang ekstrem.
+- Gerakan harus kontinu dan masuk akal dari scene ke scene: camera push-in, pan, tilt, controlled partial orbit, rack focus, close-up, pull-back, atau gerakan objek yang wajar. Hindari orbit 360 derajat yang terlalu cepat atau gerakan ekstrem yang dapat menyebabkan identity drift.
+- Jangan memaksakan aksi penggunaan jika mekanisme atau aksesori yang diperlukan tidak terlihat jelas pada reference image. Jika demonstrasi tidak dapat dipastikan dari screenshot, gunakan cinematic product interaction yang hanya melibatkan bagian yang terlihat.
 - Setiap scene harus terasa sebagai kelanjutan scene sebelumnya, bukan enam klip yang terpisah.
 - Total durasi tepat 12 detik.
 - Output video final 9:16.
 - Gaya visual: clean commercial product advertisement, realistic, premium, cinematic lighting, sharp product details.
-- Prioritaskan produk tetap konsisten sepanjang video.
+- Prioritaskan produk tetap konsisten sepanjang video dan jangan membuat klaim fungsi yang tidak dapat didukung oleh reference image.
 
 Keluarkan HANYA satu MASTER PROMPT dalam bahasa Inggris. Jangan keluarkan storyboard JSON, tabel, atau enam gambar. Master prompt harus sudah memuat seluruh urutan 6 scene, timing 0-12 detik, instruksi membersihkan screenshot, konsistensi produk, gerakan kamera, dan spesifikasi 9:16.`;
 }
