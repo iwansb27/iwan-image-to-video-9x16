@@ -2,6 +2,7 @@ const storyImageEl = document.querySelector('#storyImage');
 const storyPreview = document.querySelector('#storySourcePreview');
 const storyDrop = document.querySelector('#storyDrop');
 const keyEl = document.querySelector('#geminiKey');
+const openRouterKeyEl = document.querySelector('#openRouterKey');
 const generateBtn = document.querySelector('#generateStoryboard');
 const copyMasterBtn = document.querySelector('#copyMasterPrompt');
 const downloadBtn = document.querySelector('#downloadStoryboard');
@@ -15,12 +16,63 @@ let storyStartedAt = 0;
 
 const saveKeyBtn = document.querySelector('#saveGeminiKey');
 const keySaveStatus = document.querySelector('#keySaveStatus');
+const saveOpenRouterKeyBtn = document.querySelector('#saveOpenRouterKey');
+const openRouterKeySaveStatus = document.querySelector('#openRouterKeySaveStatus');
+const generateImagesBtnEl = document.querySelector('#generateSceneImages');
 
 function lockGeminiKey(){
   if(keyEl){ keyEl.readOnly = true; keyEl.disabled = true; }
   if(saveKeyBtn){
     saveKeyBtn.disabled = true;
     saveKeyBtn.textContent = 'API Key Tersimpan ✓';
+  }
+}
+
+function lockOpenRouterKey(){
+  if(openRouterKeyEl){ openRouterKeyEl.readOnly = true; openRouterKeyEl.disabled = true; }
+  if(saveOpenRouterKeyBtn){
+    saveOpenRouterKeyBtn.disabled = true;
+    saveOpenRouterKeyBtn.textContent = 'OpenRouter Tersimpan ✓';
+  }
+}
+function unlockOpenRouterKey(){
+  if(openRouterKeyEl){ openRouterKeyEl.readOnly = false; openRouterKeyEl.disabled = false; }
+  if(saveOpenRouterKeyBtn){
+    saveOpenRouterKeyBtn.disabled = false;
+    saveOpenRouterKeyBtn.textContent = 'Simpan OpenRouter';
+  }
+}
+function loadOpenRouterKey(){
+  try{
+    const saved = localStorage.getItem('iwan_openrouter_api_key') || '';
+    openRouterKeyEl.value = saved;
+    if(saved){
+      if(openRouterKeySaveStatus) openRouterKeySaveStatus.textContent = 'OpenRouter API key tersimpan di browser.';
+      lockOpenRouterKey();
+    }else{
+      unlockOpenRouterKey();
+    }
+  }catch(err){
+    console.warn('localStorage OpenRouter tidak tersedia', err);
+    unlockOpenRouterKey();
+  }
+}
+function saveOpenRouterKey(event){
+  event?.preventDefault();
+  event?.stopPropagation();
+  const key = openRouterKeyEl.value.trim();
+  if(!key){
+    if(openRouterKeySaveStatus) openRouterKeySaveStatus.textContent = 'OpenRouter API key masih kosong.';
+    return;
+  }
+  try{
+    localStorage.setItem('iwan_openrouter_api_key', key);
+    if(localStorage.getItem('iwan_openrouter_api_key') !== key) throw new Error('Verifikasi penyimpanan gagal.');
+    if(openRouterKeySaveStatus) openRouterKeySaveStatus.textContent = '✓ OpenRouter API key tersimpan di browser.';
+    lockOpenRouterKey();
+  }catch(err){
+    console.error(err);
+    if(openRouterKeySaveStatus) openRouterKeySaveStatus.textContent = '✕ Gagal menyimpan OpenRouter API key.';
   }
 }
 
@@ -74,7 +126,9 @@ function saveGeminiKey(event){
 }
 
 loadGeminiKey();
+loadOpenRouterKey();
 saveKeyBtn?.addEventListener('click', saveGeminiKey);
+saveOpenRouterKeyBtn?.addEventListener('click', saveOpenRouterKey);
 
 keyEl.addEventListener('change', saveGeminiKey);
 
@@ -152,71 +206,8 @@ Keluarkan HANYA JSON dengan struktur:
 async function geminiTextStoryboard(key){
   const base64=sourceDataUrl.split(',')[1];
   const mime=sourceDataUrl.slice(5,sourceDataUrl.indexOf(';'));
-  const models=['qwen/qwen3-vl-30b-a3b:free','google/gemini-2.5-flash-lite','google/gemini-2.5-flash'];
-  let lastError='OpenRouter/Gemini tidak dapat memproses permintaan.';
-  for(const model of models){
-    try{
-      const body={
-        model,
-        messages:[{
-          role:'user',
-          content:[
-            {type:'text',text:promptForGemini()},
-            {type:'image_url',image_url:{url:sourceDataUrl}}
-          ]
-        }],
-        temperature:0.2
-      };
-      const res=await fetch('https://openrouter.ai/api/v1/chat/completions',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+encodeURIComponent(key)},
-        body:JSON.stringify(body)
-      });
-      const data=await res.json();
-      if(res.ok){
-        const text=data?.choices?.[0]?.message?.content || '';
-        if(!text) throw new Error('AI tidak mengembalikan teks storyboard.');
-        return extractJson(text);
-      }
-      lastError=data?.error?.message || ('OpenRouter gagal pada '+model+'.');
-      if(!(res.status===429 || res.status>=500)) throw new Error(lastError);
-    }catch(err){
-      lastError=err?.message || String(err);
-    }
-  }
-  throw new Error(lastError);
-}
-
-async function generateCleanSceneImage(key, scene){
-  const base64=sourceDataUrl.split(',')[1];
-  const mime=sourceDataUrl.slice(5,sourceDataUrl.indexOf(';'));
-  const models=['gemini-3.8-flash','gemini-3.7-flash','gemini-3.6-flash','gemini-3.5-flash-lite'];
-  const cleanPrompt=`Create ONE clean advertising storyboard frame for Scene ${scene.scene}.
-
-The supplied image is ONLY a reference for identifying the physical product. Reconstruct the product as a clean standalone advertising visual. Do NOT reproduce, trace, crop, screenshot, or preserve the marketplace page.
-
-SCENE VISUAL:
-${scene.visual}
-
-SCENE MOTION CONTEXT:
-${scene.motion}
-
-STRICT VISUAL RULES:
-- Output ONLY a clean product advertising scene.
-- NO marketplace UI, product listing page, shopping page, app chrome, buttons, menus, ratings, price panels, commission/affiliate information, navigation icons, comments, badges, seller information, or status bar.
-- NO phone screenshot framing unless the scene explicitly requires a real phone as a physical prop.
-- Do not place the supplied screenshot inside the output.
-- Do not preserve any background or layout from the marketplace screenshot.
-- Preserve the real product's recognizable shape, colors, materials, branding and physical details.
-- No invented product redesign.
-- No watermark.
-- No random text.
-- Realistic lighting, materials and physically plausible geometry.
-- Product-focused cinematic advertising composition.
-- Native vertical 9:16, optimized for smartphone video.
-- This is a clean storyboard reference frame, not a marketplace screenshot.`;
-
-  let lastError='Image generation gagal.';
+  const models=['gemini-3.8-flash','gemini-3.7-flash','gemini-3.6-flash'];
+  let lastError='Gemini tidak dapat memproses storyboard.';
   for(const model of models){
     for(let attempt=0;attempt<2;attempt++){
       try{
@@ -224,47 +215,107 @@ STRICT VISUAL RULES:
           model,
           input:[
             {type:'image',mime_type:mime,data:base64},
-            {type:'text',text:cleanPrompt}
+            {type:'text',text:promptForGemini()}
           ],
-          response_format:{type:'image',aspect_ratio:'9:16'}
+          response_format:{type:'text',mime_type:'application/json'}
         };
-        const res=await fetch('https://generativelanguage.googleapis.com/v1beta/interactions?key='+encodeURIComponent(key),{
-          method:'POST',
-          headers:{'Content-Type':'application/json','x-goog-api-key':key},
-          body:JSON.stringify(body)
-        });
+        const controller=new AbortController();
+        const timeoutId=setTimeout(()=>controller.abort(),45000);
+        let res;
+        try{
+          res=await fetch('https://generativelanguage.googleapis.com/v1beta/interactions?key='+encodeURIComponent(key),{
+            method:'POST',
+            headers:{'Content-Type':'application/json','x-goog-api-key':key},
+            body:JSON.stringify(body),
+            signal:controller.signal
+          });
+        }finally{ clearTimeout(timeoutId); }
         const data=await res.json();
         if(res.ok){
-          const outputs=data?.steps?.filter(s=>s.type==='model_output')?.flatMap(s=>s.content||[]);
-          const part=outputs.find(p=>p.type==='image' && (p.data || p.image_data || p.inline_data || p.inlineData));
-          const imageData=part?.data || part?.image_data || part?.inline_data?.data || part?.inlineData?.data;
-          const imageMime=part?.mime_type || part?.mimeType || part?.inline_data?.mime_type || part?.inlineData?.mimeType || 'image/png';
-          if(!imageData) throw new Error('Model tidak mengembalikan visual gambar untuk Scene '+scene.scene+'.');
-          return 'data:'+imageMime+';base64,'+imageData;
+          const text=data?.steps?.filter(s=>s.type==='model_output')?.flatMap(s=>s.content||[]).filter(p=>p.type==='text').map(p=>p.text||'').join('') || '';
+          if(!text) throw new Error('Gemini tidak mengembalikan teks storyboard.');
+          return extractJson(text);
         }
-        lastError=data?.error?.message || ('Image API gagal pada '+model+'.');
-        const transient=res.status===429 || res.status>=500;
-        if(!transient) throw new Error(lastError);
+        lastError=data?.error?.message || ('Gemini gagal pada '+model+'.');
+        if(!(res.status===429 || res.status>=500)) throw new Error(lastError);
       }catch(err){
-        lastError=err?.message || String(err);
-        if(attempt===1 && !/high demand|temporar|429|5\\d\\d/i.test(lastError)) throw err;
+        lastError=err?.name==='AbortError' ? 'Gemini timeout setelah 45 detik.' : (err?.message || String(err));
       }
-      await new Promise(r=>setTimeout(r,1200*Math.pow(2,attempt)));
+      if(attempt===0) await new Promise(r=>setTimeout(r,1200));
     }
   }
   throw new Error(lastError);
+}
+
+async function generateCleanSceneImage(openRouterKey, scene){
+  const model='qwen/qwen-image-3';
+  const cleanPrompt=`Create ONE clean advertising storyboard frame for Scene ${scene.scene}.
+
+The supplied image is ONLY a product reference. Recreate the physical product as a clean standalone commercial visual.
+
+SCENE VISUAL:
+${scene.visual}
+
+SCENE MOTION CONTEXT:
+${scene.motion}
+
+STRICT RULES:
+- Do NOT reproduce, trace, crop, screenshot, or preserve the marketplace page.
+- Do NOT show marketplace UI, shopping UI, app chrome, status bar, menus, buttons, ratings, price panels, commission/affiliate information, seller information, navigation icons, comments, badges, or irrelevant text.
+- Do NOT place the supplied screenshot inside the generated image.
+- Preserve the recognizable product shape, colors, materials, branding, connector details and physical features.
+- No invented redesign.
+- No watermark and no random text.
+- Clean cinematic advertising composition with realistic lighting and materials.
+- Product is the main subject.
+- Native vertical 9:16 composition for smartphone video.
+- Generate an image, not a screenshot.`;
+
+  const controller=new AbortController();
+  const timeoutId=setTimeout(()=>controller.abort(),75000);
+  try{
+    const body={
+      model,
+      prompt:cleanPrompt,
+      input_references:[
+        {type:'image_url',image_url:{url:sourceDataUrl}}
+      ],
+      aspect_ratio:'9:16',
+      resolution:'1K'
+    };
+    const res=await fetch('https://openrouter.ai/api/v1/images',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+openRouterKey
+      },
+      body:JSON.stringify(body),
+      signal:controller.signal
+    });
+    const data=await res.json();
+    if(!res.ok) throw new Error(data?.error?.message || 'OpenRouter image generation gagal pada Scene '+scene.scene+'.');
+    const item=data?.data?.[0];
+    if(!item?.b64_json) throw new Error('OpenRouter tidak mengembalikan gambar untuk Scene '+scene.scene+'.');
+    const mediaType=item.media_type || 'image/png';
+    return 'data:'+mediaType+';base64,'+item.b64_json;
+  }catch(err){
+    if(err?.name==='AbortError') throw new Error('OpenRouter timeout setelah 75 detik pada Scene '+scene.scene+'.');
+    throw err;
+  }finally{
+    clearTimeout(timeoutId);
+  }
 }
 
 async function generateStoryboard(){
   if(!sourceDataUrl){setStoryStatus('Upload screenshot terlebih dahulu.');return;}
   const key=keyEl.value.trim();
   if(!key){
-    setStoryStatus('Masukkan Gemini API key terlebih dahulu. Key hanya disimpan lokal di browser.');
+    setStoryStatus('Masukkan Gemini API key terlebih dahulu.');
     keyEl.focus();
     return;
   }
   localStorage.setItem('iwan_gemini_api_key',key);
-  const generateImagesBtn=document.querySelector('#generateSceneImages') || (()=>{ const b=document.createElement('button'); b.id='generateSceneImages'; b.className='secondary'; b.type='button'; b.textContent='Generate 6 Gambar'; b.disabled=true; b.addEventListener('click',generateAllSceneImages); generateBtn.parentElement?.appendChild(b); return b; })();
+  const generateImagesBtn=generateImagesBtnEl;
   generateBtn.disabled=true;
   startStoryTimer();
   updateProgress(0,'membaca screenshot & menyusun storyboard');
@@ -276,7 +327,6 @@ async function generateStoryboard(){
     storyboard.scenes=storyboard.scenes.map(s=>({...s, imageDataUrl:''}));
     renderStoryboard();
 
-    const generateImagesBtn=document.querySelector('#generateSceneImages');
     if(generateImagesBtn){
       generateImagesBtn.disabled=false;
       generateImagesBtn.textContent='Generate 6 Gambar';
@@ -295,13 +345,15 @@ async function generateStoryboard(){
 
 async function generateAllSceneImages(){
   if(!storyboard?.scenes?.length){ setStoryStatus('Buat storyboard teks terlebih dahulu.'); return; }
+  const openRouterKey=openRouterKeyEl.value.trim();
+  if(!openRouterKey){ setStoryStatus('Masukkan OpenRouter API key terlebih dahulu.'); openRouterKeyEl.focus(); return; }
   const btn=document.querySelector('#generateSceneImages');
   if(btn) btn.disabled=true;
   const started=Date.now();
   for(let i=0;i<storyboard.scenes.length;i++){
     updateProgress(i,'generate gambar bersih');
     try{
-      storyboard.scenes[i].imageDataUrl=await generateCleanSceneImage(keyEl.value.trim(),storyboard.scenes[i]);
+      storyboard.scenes[i].imageDataUrl=await generateCleanSceneImage(openRouterKey,storyboard.scenes[i]);
       storyboard.scenes[i].imageFallback=false;
     }catch(err){
       storyboard.scenes[i].imageDataUrl='';
@@ -363,4 +415,5 @@ function downloadStoryboard(){
 }
 
 generateBtn.addEventListener('click',generateStoryboard);
+generateImagesBtnEl?.addEventListener('click',generateAllSceneImages);
 downloadBtn.addEventListener('click',downloadStoryboard);
