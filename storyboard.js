@@ -147,27 +147,41 @@ Keluarkan HANYA JSON dengan struktur:
 async function geminiTextStoryboard(key){
   const base64=sourceDataUrl.split(',')[1];
   const mime=sourceDataUrl.slice(5,sourceDataUrl.indexOf(';'));
-  const body={
-    model:'gemini-3.6-flash',
-    input:[
-      {type:'image',mime_type:mime,data:base64},
-      {type:'text',text:promptForGemini()}
-    ],
-    response_format:{
-      type:'text',
-      mime_type:'application/json'
+  const models=['gemini-3.8-flash','gemini-3.7-flash','gemini-3.6-flash','gemini-3.5-flash-lite'];
+  let lastError='Gemini tidak dapat memproses permintaan.';
+  for(const model of models){
+    const body={
+      model,
+      input:[
+        {type:'image',mime_type:mime,data:base64},
+        {type:'text',text:promptForGemini()}
+      ],
+      response_format:{type:'text',mime_type:'application/json'}
+    };
+    for(let attempt=0;attempt<3;attempt++){
+      try{
+        const res=await fetch('https://generativelanguage.googleapis.com/v1beta/interactions?key='+encodeURIComponent(key),{
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-goog-api-key':key},
+          body:JSON.stringify(body)
+        });
+        const data=await res.json();
+        if(res.ok){
+          const text=data?.steps?.filter(s=>s.type==='model_output')?.flatMap(s=>s.content||[]).filter(p=>p.type==='text').map(p=>p.text||'').join('') || '';
+          if(!text) throw new Error('Gemini tidak mengembalikan teks storyboard.');
+          return extractJson(text);
+        }
+        lastError=data?.error?.message || ('Gemini API gagal pada '+model+'.');
+        const transient=res.status===429 || res.status===500 || res.status===502 || res.status===503 || res.status===504;
+        if(!transient) throw new Error(lastError);
+      }catch(err){
+        lastError=err?.message || String(err);
+        if(attempt===2 && !/high demand|temporar|429|503|502|504/i.test(lastError)) throw err;
+      }
+      await new Promise(r=>setTimeout(r,1200*Math.pow(2,attempt)));
     }
-  };
-  const res=await fetch('https://generativelanguage.googleapis.com/v1beta/interactions?key='+encodeURIComponent(key),{
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-goog-api-key':key},
-    body:JSON.stringify(body)
-  });
-  const data=await res.json();
-  if(!res.ok) throw new Error(data?.error?.message || 'Gemini Interactions API gagal.');
-  const text=data?.steps?.filter(s=>s.type==='model_output')?.flatMap(s=>s.content||[]).filter(p=>p.type==='text').map(p=>p.text||'').join('') || '';
-  if(!text) throw new Error('Gemini tidak mengembalikan teks storyboard.');
-  return extractJson(text);
+  }
+  throw new Error(lastError+' Semua model Flash yang tersedia sedang sibuk. Silakan coba lagi beberapa saat.');
 }
 
 async function generateCleanSceneImage(key, scene){
