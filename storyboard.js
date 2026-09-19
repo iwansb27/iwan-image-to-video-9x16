@@ -187,9 +187,10 @@ async function geminiTextStoryboard(key){
 async function generateCleanSceneImage(key, scene){
   const base64=sourceDataUrl.split(',')[1];
   const mime=sourceDataUrl.slice(5,sourceDataUrl.indexOf(';'));
+  const models=['gemini-3.8-flash','gemini-3.7-flash','gemini-3.6-flash','gemini-3.5-flash-lite'];
   const cleanPrompt=`Create ONE clean advertising storyboard frame for Scene ${scene.scene}.
 
-Use the supplied product screenshot ONLY as product-reference information. Preserve the exact recognizable product identity, shape, colors, materials, branding, connector details and important physical features.
+The supplied image is ONLY a reference for identifying the physical product. Reconstruct the product as a clean standalone advertising visual. Do NOT reproduce, trace, crop, screenshot, or preserve the marketplace page.
 
 SCENE VISUAL:
 ${scene.visual}
@@ -197,43 +198,58 @@ ${scene.visual}
 SCENE MOTION CONTEXT:
 ${scene.motion}
 
-CLEAN-UP RULES:
-- Do NOT reproduce the marketplace screenshot layout.
-- Remove/ignore phone status bar: time, signal, Wi-Fi, battery.
-- Remove/ignore marketplace/app UI, menus, buttons, commission/affiliate information, ratings, navigation icons and irrelevant tiny text.
-- Do not show the original screenshot as a screenshot or phone screen unless the scene explicitly requires a phone as a physical prop.
-- Focus on the real product in a clean cinematic environment.
+STRICT VISUAL RULES:
+- Output ONLY a clean product advertising scene.
+- NO marketplace UI, product listing page, shopping page, app chrome, buttons, menus, ratings, price panels, commission/affiliate information, navigation icons, comments, badges, seller information, or status bar.
+- NO phone screenshot framing unless the scene explicitly requires a real phone as a physical prop.
+- Do not place the supplied screenshot inside the output.
+- Do not preserve any background or layout from the marketplace screenshot.
+- Preserve the real product's recognizable shape, colors, materials, branding and physical details.
+- No invented product redesign.
 - No watermark.
 - No random text.
-- No invented product redesign.
-- Keep the product prominent and physically plausible.
-- Composition must be native vertical 9:16, optimized for smartphone video.
-- This is a visual storyboard reference frame, not a finished video.`;
+- Realistic lighting, materials and physically plausible geometry.
+- Product-focused cinematic advertising composition.
+- Native vertical 9:16, optimized for smartphone video.
+- This is a clean storyboard reference frame, not a marketplace screenshot.`;
 
-  const body={
-    contents:[{
-      parts:[
-        {text:cleanPrompt},
-        {inline_data:{mime_type:mime,data:base64}}
-      ]
-    }],
-    generationConfig:{
-      responseModalities:['IMAGE'],
-      responseFormat:{image:{aspectRatio:'9:16'}}
+  let lastError='Image generation gagal.';
+  for(const model of models){
+    for(let attempt=0;attempt<2;attempt++){
+      try{
+        const body={
+          model,
+          input:[
+            {type:'image',mime_type:mime,data:base64},
+            {type:'text',text:cleanPrompt}
+          ],
+          response_format:{type:'image',aspect_ratio:'9:16'}
+        };
+        const res=await fetch('https://generativelanguage.googleapis.com/v1beta/interactions?key='+encodeURIComponent(key),{
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-goog-api-key':key},
+          body:JSON.stringify(body)
+        });
+        const data=await res.json();
+        if(res.ok){
+          const outputs=data?.steps?.filter(s=>s.type==='model_output')?.flatMap(s=>s.content||[]);
+          const part=outputs.find(p=>p.type==='image' && (p.data || p.image_data || p.inline_data || p.inlineData));
+          const imageData=part?.data || part?.image_data || part?.inline_data?.data || part?.inlineData?.data;
+          const imageMime=part?.mime_type || part?.mimeType || part?.inline_data?.mime_type || part?.inlineData?.mimeType || 'image/png';
+          if(!imageData) throw new Error('Model tidak mengembalikan visual gambar untuk Scene '+scene.scene+'.');
+          return 'data:'+imageMime+';base64,'+imageData;
+        }
+        lastError=data?.error?.message || ('Image API gagal pada '+model+'.');
+        const transient=res.status===429 || res.status>=500;
+        if(!transient) throw new Error(lastError);
+      }catch(err){
+        lastError=err?.message || String(err);
+        if(attempt===1 && !/high demand|temporar|429|5\\d\\d/i.test(lastError)) throw err;
+      }
+      await new Promise(r=>setTimeout(r,1200*Math.pow(2,attempt)));
     }
-  };
-  const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key='+encodeURIComponent(key),{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(body)
-  });
-  const data=await res.json();
-  if(!res.ok) throw new Error(data?.error?.message || 'Gemini image generation gagal pada Scene '+scene.scene+'.');
-  const part=data?.candidates?.[0]?.content?.parts?.find(p=>p.inlineData?.data || p.inline_data?.data);
-  const imageData=part?.inlineData?.data || part?.inline_data?.data;
-  const imageMime=part?.inlineData?.mimeType || part?.inlineData?.mime_type || part?.inline_data?.mimeType || part?.inline_data?.mime_type || 'image/png';
-  if(!imageData) throw new Error('Gemini tidak mengembalikan gambar untuk Scene '+scene.scene+'.');
-  return 'data:'+imageMime+';base64,'+imageData;
+  }
+  throw new Error(lastError);
 }
 
 async function generateStoryboard(){
@@ -270,7 +286,7 @@ async function generateStoryboard(){
 
     const fallbackCount=storyboard.scenes.filter(s=>s.imageFallback).length;
     setStoryStatus(fallbackCount
-      ? 'Storyboard selesai, tetapi '+fallbackCount+' visual belum dibuat. Screenshot marketplace TIDAK dipakai sebagai fallback agar hasil tetap bersih.'
+      ? 'Storyboard selesai, tetapi '+fallbackCount+' visual belum berhasil dibuat. Screenshot marketplace TIDAK ditampilkan sebagai fallback.'
       : 'Storyboard 6 scene selesai dengan visual bersih 9:16.');
   }catch(err){
     console.error(err);
@@ -287,7 +303,7 @@ function escapeHtml(v=''){
 function renderStoryboard(){
   const scenes=Array.isArray(storyboard?.scenes)?storyboard.scenes.slice(0,6):[];
   const cards=scenes.map(s=>{
-    const img=s.imageDataUrl || sourceDataUrl;
+    const img=s.imageDataUrl;
     return `
     <article class="scene-card">
       <div class="scene-top"><span>SCENE ${escapeHtml(s.scene)}</span><span>${escapeHtml(s.duration)}</span></div>
@@ -315,7 +331,7 @@ copyMasterBtn.addEventListener('click',async()=>{
 
 function downloadStoryboard(){
   if(!storyboard){setStoryStatus('Buat storyboard terlebih dahulu.');return;}
-  const html='<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escapeHtml(storyboard.title||'Storyboard 6 Scene')+'</title><style>body{font-family:Arial,sans-serif;background:#eee;margin:0;padding:20px;color:#111}.sheet{max-width:1100px;margin:auto;background:#fff;padding:20px}.scenes{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.card{border:1px solid #ccc;border-radius:10px;padding:10px;break-inside:avoid}.card img{width:100%;aspect-ratio:9/16;object-fit:cover;border-radius:7px;background:#f4f4f4}.top{display:flex;justify-content:space-between;font-weight:bold;font-size:12px}.label{font-size:10px;font-weight:bold;color:#666;text-transform:uppercase;margin-top:7px}.desc{font-size:11px;line-height:1.4}.prompt{font:10px/1.4 monospace;background:#f1f1f1;padding:7px;border-radius:6px;white-space:pre-wrap}.master{margin-top:12px;border:1px solid #ccc;padding:10px;border-radius:10px}.master p{font:10px/1.4 monospace;white-space:pre-wrap}@media(max-width:700px){.scenes{grid-template-columns:1fr}}@media print{body{background:#fff;padding:0}.sheet{max-width:none}}</style></head><body><main class="sheet"><h1>'+escapeHtml(storyboard.title||'Storyboard 6 Scene')+'</h1><p>NATIVE VERTICAL 9:16 · CLEAN PRODUCT VISUAL</p><section class="scenes">'+storyboard.scenes.slice(0,6).map(s=>'<article class="card"><div class="top"><span>SCENE '+escapeHtml(s.scene)+'</span><span>'+escapeHtml(s.duration)+'</span></div><img src="'+(s.imageDataUrl||sourceDataUrl)+'" alt="Visual bersih"><div class="label">Visual</div><div class="desc">'+escapeHtml(s.visual)+'</div><div class="label">Gerakan</div><div class="desc">'+escapeHtml(s.motion)+'</div><div class="label">Prompt Scene</div><div class="prompt">'+escapeHtml(s.prompt)+'</div></article>').join('')+'</section><section class="master"><h3>MASTER PROMPT</h3><p>'+escapeHtml(storyboard.master_prompt||'')+'</p></section></main></body></html>';
+  const html='<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escapeHtml(storyboard.title||'Storyboard 6 Scene')+'</title><style>body{font-family:Arial,sans-serif;background:#eee;margin:0;padding:20px;color:#111}.sheet{max-width:1100px;margin:auto;background:#fff;padding:20px}.scenes{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.card{border:1px solid #ccc;border-radius:10px;padding:10px;break-inside:avoid}.card img{width:100%;aspect-ratio:9/16;object-fit:cover;border-radius:7px;background:#f4f4f4}.top{display:flex;justify-content:space-between;font-weight:bold;font-size:12px}.label{font-size:10px;font-weight:bold;color:#666;text-transform:uppercase;margin-top:7px}.desc{font-size:11px;line-height:1.4}.prompt{font:10px/1.4 monospace;background:#f1f1f1;padding:7px;border-radius:6px;white-space:pre-wrap}.master{margin-top:12px;border:1px solid #ccc;padding:10px;border-radius:10px}.master p{font:10px/1.4 monospace;white-space:pre-wrap}@media(max-width:700px){.scenes{grid-template-columns:1fr}}@media print{body{background:#fff;padding:0}.sheet{max-width:none}}</style></head><body><main class="sheet"><h1>'+escapeHtml(storyboard.title||'Storyboard 6 Scene')+'</h1><p>NATIVE VERTICAL 9:16 · CLEAN PRODUCT VISUAL</p><section class="scenes">'+storyboard.scenes.slice(0,6).map(s=>'<article class="card"><div class="top"><span>SCENE '+escapeHtml(s.scene)+'</span><span>'+escapeHtml(s.duration)+'</span></div>'+(s.imageDataUrl ? '<img src="'+s.imageDataUrl+'" alt="Visual bersih">' : '<div style="padding:30px;border:1px dashed #aaa">Visual scene belum berhasil dibuat.</div>')+'<div class="label">Visual</div><div class="desc">'+escapeHtml(s.visual)+'</div><div class="label">Gerakan</div><div class="desc">'+escapeHtml(s.motion)+'</div><div class="label">Prompt Scene</div><div class="prompt">'+escapeHtml(s.prompt)+'</div></article>').join('')+'</section><section class="master"><h3>MASTER PROMPT</h3><p>'+escapeHtml(storyboard.master_prompt||'')+'</p></section></main></body></html>';
   const blob=new Blob([html],{type:'text/html;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='iwan-storyboard-6-scene.html';a.click();
