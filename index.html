@@ -15,13 +15,14 @@
         <span>Satu gambar produk sebagai referensi storyboard</span>
       </label>
       <div class="story-preview-wrap"><img id="storySourcePreview" alt="Preview screenshot" hidden></div>
-      <label class="story-key">Gemini API Key <span>(disimpan lokal di browser)</span>
+      <div class="story-key">
+        <label for="geminiKey">Gemini API Key <span>(disimpan lokal di browser)</span></label>
         <div class="story-key-row">
-          <input id="geminiKey" type="password" placeholder="Masukkan API key Gemini">
+          <input id="geminiKey" type="password" placeholder="Masukkan API key Gemini" autocomplete="off">
           <button id="saveGeminiKey" class="secondary" type="button">Simpan API Key</button>
         </div>
         <small id="keySaveStatus" class="status"></small>
-      </label>
+      </div>
       <div class="story-actions">
         <button id="generateStoryboard" class="primary" type="button">Buat Storyboard 6 Scene</button>
         <button id="copyMasterPrompt" class="secondary" type="button">Copy Master Prompt</button>
