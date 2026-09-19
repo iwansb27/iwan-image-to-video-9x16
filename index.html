@@ -1,1 +1,33 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b0b0f"><title>IWAN Image to Video 9:16</title><link rel="stylesheet" href="styles.css"></head><body><main class="app"><header><div><p class="eyebrow">IWAN TOOL</p><h1>Image to Video <span>9:16</span></h1><p class="sub">Browser-local. No login. No upload to a server.</p></div><div class="badge">MP4 · Silent</div></header><section class="panel"><div class="controls"><label class="drop" id="drop"><input id="files" type="file" accept="image/*" multiple><strong>+ Tambah 1–5 gambar</strong><span>Tap untuk pilih gambar, atau drag & drop</span></label><div class="row"><label>Rasio<select id="ratio"><option value="9:16">9:16</option><option value="4:5">4:5</option><option value="1:1">1:1</option><option value="16:9">16:9</option></select></label><label>Durasi<select id="duration"><option>5</option><option>8</option><option>10</option><option>15</option><option>20</option><option>30</option></select></label></div><div class="row"><label>Logo bulat <span class="muted">(opsional)</span><input id="logo" type="file" accept="image/*"></label><button id="clearLogo" class="ghost" type="button">Hapus logo</button></div><div class="actions"><button id="preview" class="secondary" type="button">Preview</button><button id="render" class="primary" type="button">Render MP4</button></div><a id="download" class="download" hidden>⬇ Download MP4</a><p id="status" class="status">Siap. Semua proses dilakukan di browser.</p></div><div class="stage"><canvas id="canvas"></canvas><div id="empty" class="empty">Preview akan muncul di sini</div></div></section><section class="thumbs" id="thumbs"></section><footer><span>Gerak utama: zoom + pan horizontal/vertikal</span><span>Rolling image: besar di atas/bawah</span></footer></main><script type="module" src="app.js"></script></body></html>
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b0b0f"><title>IWAN Image to Video 9:16</title><link rel="stylesheet" href="styles.css"></head><body><main class="app"><header><div><p class="eyebrow">IWAN TOOL</p><h1>Image to Video <span>9:16</span></h1><p class="sub">Browser-local. No login. No upload to a server.</p></div><div class="badge">MP4 · Silent</div></header><section class="panel"><div class="controls"><label class="drop" id="drop"><input id="files" type="file" accept="image/*" multiple><strong>+ Tambah 1–5 gambar</strong><span>Tap untuk pilih gambar, atau drag & drop</span></label><div class="row"><label>Rasio<select id="ratio"><option value="9:16">9:16</option><option value="4:5">4:5</option><option value="1:1">1:1</option><option value="16:9">16:9</option></select></label><label>Durasi<select id="duration"><option>5</option><option>8</option><option>10</option><option>15</option><option>20</option><option>30</option></select></label></div><div class="row"><label>Logo bulat <span class="muted">(opsional)</span><input id="logo" type="file" accept="image/*"></label><button id="clearLogo" class="ghost" type="button">Hapus logo</button></div><div class="actions"><button id="preview" class="secondary" type="button">Preview</button><button id="render" class="primary" type="button">Render MP4</button></div><a id="download" class="download" hidden>⬇ Download MP4</a><p id="status" class="status">Siap. Semua proses dilakukan di browser.</p></div><div class="stage"><canvas id="canvas"></canvas><div id="empty" class="empty">Preview akan muncul di sini</div></div></section><section class="thumbs" id="thumbs"></section><section class="storyboard-panel" id="storyboardPanel">
+  <div class="storyboard-head">
+    <div>
+      <p class="eyebrow">KONSOL 2</p>
+      <h2>Storyboard Creator</h2>
+      <p class="sub">Upload 1 screenshot produk → Gemini membaca referensi → storyboard 6 scene native 9:16.</p>
+    </div>
+    <div class="storyboard-badge">STORYBOARD · 6 SCENE</div>
+  </div>
+  <div class="storyboard-grid">
+    <div class="storyboard-controls">
+      <label class="story-drop" id="storyDrop">
+        <input id="storyImage" type="file" accept="image/*">
+        <strong>＋ Upload Screenshot</strong>
+        <span>Satu gambar produk sebagai referensi storyboard</span>
+      </label>
+      <div class="story-preview-wrap"><img id="storySourcePreview" alt="Preview screenshot" hidden></div>
+      <label class="story-key">Gemini API Key <span>(disimpan lokal di browser)</span>
+        <input id="geminiKey" type="password" placeholder="Masukkan API key Gemini">
+      </label>
+      <div class="story-actions">
+        <button id="generateStoryboard" class="primary" type="button">Buat Storyboard 6 Scene</button>
+        <button id="copyMasterPrompt" class="secondary" type="button">Copy Master Prompt</button>
+        <button id="downloadStoryboard" class="secondary" type="button">Download Storyboard</button>
+      </div>
+      <p id="storyStatus" class="status">Belum ada storyboard.</p>
+    </div>
+    <div class="storyboard-sheet" id="storyboardSheet">
+      <div class="story-empty">Storyboard 6 scene akan muncul di sini.</div>
+    </div>
+  </div>
+</section>
+<footer><span>Gerak utama: zoom + pan horizontal/vertikal</span><span>Rolling image: besar di atas/bawah</span></footer></main><script type="module" src="app.js"></script><script type="module" src="storyboard.js"></script></body></html>
