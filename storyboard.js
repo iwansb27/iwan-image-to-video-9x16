@@ -78,40 +78,46 @@ PENTING:
 Keluarkan HANYA satu MASTER PROMPT dalam bahasa Inggris. Jangan keluarkan storyboard JSON, tabel, atau enam gambar. Master prompt harus sudah memuat seluruh urutan 6 scene, timing 0-12 detik, instruksi membersihkan screenshot, konsistensi produk, gerakan kamera, dan spesifikasi 9:16.`;
 }
 
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
 async function callGemini(key){
   const base64=sourceDataUrl.split(',')[1];
   const mime=sourceDataUrl.slice(5,sourceDataUrl.indexOf(';'));
-  const models=['gemini-3.6-flash'];
+  const models=['gemini-3.6-flash','gemini-3.7-flash','gemini-flash-latest'];
   let last='Gemini gagal membuat master prompt.';
   for(const model of models){
-    try{
-      const ctl=new AbortController();
-      const tid=setTimeout(()=>ctl.abort(),45000);
-      let res;
+    for(let attempt=0;attempt<2;attempt++){
       try{
-        res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',{
-          method:'POST',
-          headers:{'Content-Type':'application/json','x-goog-api-key':key},
-          body:JSON.stringify({
-            contents:[{parts:[
-              {inline_data:{mime_type:mime,data:base64}},
-              {text:storyboardInstruction()}
-            ]}],
-            generationConfig:{}
-          }),
-          signal:ctl.signal
-        });
-      }finally{clearTimeout(tid)}
-      const data=await res.json();
-      if(res.ok){
-        const text=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('').trim()||'';
-        if(!text)throw Error('Gemini tidak mengembalikan master prompt.');
-        return text;
+        const ctl=new AbortController();
+        const tid=setTimeout(()=>ctl.abort(),45000);
+        let res;
+        try{
+          res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','x-goog-api-key':key},
+            body:JSON.stringify({
+              contents:[{parts:[
+                {inline_data:{mime_type:mime,data:base64}},
+                {text:storyboardInstruction()}
+              ]}]
+            }),
+            signal:ctl.signal
+          });
+        }finally{clearTimeout(tid)}
+        const data=await res.json();
+        if(res.ok){
+          const text=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('').trim()||'';
+          if(!text)throw Error('Gemini tidak mengembalikan master prompt.');
+          return text;
+        }
+        last=data?.error?.message||('Gemini gagal pada '+model+'.');
+        const retryable=res.status===429||res.status===500||res.status===502||res.status===503||res.status===504;
+        if(!retryable)throw Error(last);
+        if(attempt===0)await sleep(2000);
+      }catch(e){
+        last=e?.name==='AbortError'?'Timeout 45 detik.':(e.message||String(e));
+        if(attempt===0)await sleep(2000);
       }
-      last=data?.error?.message||('Gemini gagal pada '+model+'.');
-      if(res.status!==429&&res.status<500)throw Error(last);
-    }catch(e){
-      last=e?.name==='AbortError'?'Timeout 45 detik.':(e.message||String(e));
     }
   }
   throw Error(last);
