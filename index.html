@@ -24,25 +24,14 @@
         <small id="keySaveStatus" class="status"></small>
       </div>
       <div class="story-key">
-        <label for="openRouterKey">AI Gambar · OpenRouter API Key <span>(disimpan lokal di browser)</span></label>
+        <label for="pixazoKey">AI Gambar · Pixazo API Key <span>(disimpan lokal di browser)</span></label>
         <div class="story-key-row">
-          <input id="openRouterKey" type="password" placeholder="Masukkan API key OpenRouter" autocomplete="off">
-          <button id="saveOpenRouterKey" class="secondary" type="button">Simpan OpenRouter</button>
+          <input id="pixazoKey" type="password" placeholder="Masukkan API key Pixazo" autocomplete="off">
+          <button id="savePixazoKey" class="secondary" type="button">Simpan Pixazo</button>
         </div>
-        <small id="openRouterKeySaveStatus" class="status"></small>
-        <small class="status">Generator gambar: Qwen Image 3 · 9:16 · OpenRouter. Model gambar Qwen bukan tier gratis.</small>
+        <small id="pixazoKeySaveStatus" class="status"></small>
+        <small class="status">Provider uji gratis: Pixazo · Stable Diffusion 3.5 · image-to-image · native 9:16. Free preview/fair-use; tidak perlu kartu untuk memulai.</small>
       </div>
-      <div class="story-actions">
-        <button id="generateStoryboard" class="primary" type="button">Buat Storyboard 6 Scene</button>
-        <button id="generateSceneImages" class="secondary" type="button" disabled>Generate 6 Gambar</button>
-        <button id="copyMasterPrompt" class="secondary" type="button">Copy Master Prompt</button>
-        <button id="downloadStoryboard" class="secondary" type="button">Download Storyboard</button>
-      </div>
-      <p id="storyStatus" class="status">Belum ada storyboard.</p>
-    </div>
-    <div class="storyboard-sheet" id="storyboardSheet">
-      <div class="story-empty">Storyboard 6 scene akan muncul di sini.</div>
-    </div>
   </div>
 </section>
 <footer><span>Gerak utama: zoom + pan horizontal/vertikal</span><span>Rolling image: besar di atas/bawah</span></footer></main><script type="module" src="app.js"></script><script type="module" src="storyboard.js?v=11"></script></body></html>
