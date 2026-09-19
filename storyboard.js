@@ -13,6 +13,7 @@ let sourceDataUrl = '';
 let storyboard = null;
 let storyTimerId = null;
 let storyStartedAt = 0;
+let storyProgressScene = 0;
 
 const saveKeyBtn = document.querySelector('#saveGeminiKey');
 const keySaveStatus = document.querySelector('#keySaveStatus');
@@ -133,9 +134,9 @@ saveOpenRouterKeyBtn?.addEventListener('click', saveOpenRouterKey);
 keyEl.addEventListener('change', saveGeminiKey);
 
 function formatElapsed(ms){ const s=Math.floor(ms/1000); const m=Math.floor(s/60); return String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
-function startStoryTimer(){ clearInterval(storyTimerId); storyStartedAt=Date.now(); storyTimerId=setInterval(()=>updateProgress(),250); updateProgress(); }
-function stopStoryTimer(){ clearInterval(storyTimerId); storyTimerId=null; updateProgress(); }
-function updateProgress(sceneCurrent=0, phase=''){ const elapsed=storyStartedAt?formatElapsed(Date.now()-storyStartedAt):'00:00'; const total=6; const current=Math.max(0,Math.min(total,sceneCurrent)); const phaseText=phase?` · ${phase}`:''; storyStatus.textContent=`Waktu ${elapsed} · Scene ${current}/${total}${phaseText}`; }
+function startStoryTimer(){ clearInterval(storyTimerId); storyStartedAt=Date.now(); storyProgressScene=0; storyTimerId=setInterval(()=>updateProgress(storyProgressScene),250); updateProgress(0); }
+function stopStoryTimer(){ clearInterval(storyTimerId); storyTimerId=null; }
+function updateProgress(sceneCurrent=storyProgressScene, phase=''){ const elapsed=storyStartedAt?formatElapsed(Date.now()-storyStartedAt):'00:00'; const total=6; storyProgressScene=Math.max(0,Math.min(total,sceneCurrent)); const phaseText=phase?` · ${phase}`:''; storyStatus.textContent=`Waktu ${elapsed} · Scene ${storyProgressScene}/${total}${phaseText}`; }
 
 function fileToDataUrl(file){
   return new Promise((resolve,reject)=>{
@@ -331,9 +332,9 @@ async function generateStoryboard(){
       generateImagesBtn.disabled=false;
       generateImagesBtn.textContent='Generate 6 Gambar';
     }
-    updateProgress(6,'storyboard teks selesai · siap generate gambar');
-
-    setStoryStatus(`Storyboard teks selesai ${formatElapsed(Date.now()-storyStartedAt)} · Scene 6/6 · tombol Generate 6 Gambar siap.`);
+    const textElapsed=formatElapsed(Date.now()-storyStartedAt);
+    stopStoryTimer();
+    setStoryStatus(`Storyboard teks selesai ${textElapsed} · Scene 6/6 · tombol Generate 6 Gambar siap.`);
   }catch(err){
     console.error(err);
     stopStoryTimer();
@@ -349,6 +350,7 @@ async function generateAllSceneImages(){
   if(!openRouterKey){ setStoryStatus('Masukkan OpenRouter API key terlebih dahulu.'); openRouterKeyEl.focus(); return; }
   const btn=document.querySelector('#generateSceneImages');
   if(btn) btn.disabled=true;
+  startStoryTimer();
   const started=Date.now();
   for(let i=0;i<storyboard.scenes.length;i++){
     updateProgress(i,'generate gambar bersih');
