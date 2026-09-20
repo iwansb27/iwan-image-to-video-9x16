@@ -3,8 +3,7 @@ const storyDrop=document.querySelector('#storyDrop');
 const keyEl=document.querySelector('#geminiKey');
 const generateBtn=document.querySelector('#generateStoryboard');
 const copyMasterBtn=document.querySelector('#copyMasterPrompt');
-const copyPrompt1Btn=document.querySelector('#copyPrompt1');
-const copyPrompt2Btn=document.querySelector('#copyPrompt2');
+const copyExtendBtn=document.querySelector('#copyExtendPrompt');
 const downloadMasterBtn=document.querySelector('#downloadMasterPrompt');
 const storyStatus=document.querySelector('#storyStatus');
 const sheet=document.querySelector('#storyboardSheet');
@@ -13,8 +12,7 @@ const keySaveStatus=document.querySelector('#keySaveStatus');
 
 let sourceDataUrl='';
 let masterPrompt='';
-let prompt1='';
-let prompt2='';
+let extendInstruction='';
 
 const storyPreviewWrap=document.querySelector('#storyPreviewWrap');
 const storyPreview=document.querySelector('#storyPreview');
@@ -58,80 +56,86 @@ storyDrop?.addEventListener('dragover',e=>e.preventDefault());
 storyDrop?.addEventListener('drop',async e=>{e.preventDefault();await setSource(e.dataTransfer.files?.[0])});
 
 function storyboardInstruction(){
-return `Analyze ONLY the single product screenshot attached to this request.
+return \`Analyze ONLY the single product screenshot attached to this request.
 
 PURPOSE
-Create prompt instructions for Google Flow. The user will give the SAME screenshot to Google Flow as the visual reference. Gemini does NOT create a video, does NOT create images, and does NOT combine clips.
+Create exactly TWO copy-ready instruction blocks for Google Flow. The user will give the SAME product screenshot to Google Flow as the visual reference. Gemini only reads the screenshot and writes text. Gemini does NOT create a video, does NOT create images, and does NOT create a storyboard image.
 
-FINAL VIDEO DESIGN
-- Native vertical 9:16.
-- Each prompt generates ONE video of EXACTLY 8 seconds.
-- Each 8-second video contains EXACTLY 4 distinct, fast commercial shots.
-- The 4 shots are inside the same 8-second generation, not four separate 8-second videos.
-- Suggested rhythm: about 2 seconds per shot, with natural variation where needed.
-- Visual only: NO spoken dialogue, NO narration, NO music, NO sound effects, NO captions/subtitles unless text is physically printed on the real product and clearly visible in the reference.
-- If a human figure/model is appropriate and visually useful, include a realistic figure/model. Do not invent a figure if it would distract from the product.
-- Product identity must remain stable and faithful to the screenshot.
+WORKFLOW
+- The user may stop after the first 8-second generation.
+- The user may optionally use Google Flow's Extend function to add another 8 seconds.
+- Therefore, generate one MASTER PROMPT for the first 8-second video and one EXTEND INSTRUCTION for the optional second 8 seconds.
+- Do NOT create Prompt 1 and Prompt 2.
+- Do NOT create three prompts.
+- Do NOT create a 16-second prompt that must be generated in one operation.
+- The EXTEND INSTRUCTION is specifically for Google Flow Extend after the first 8-second clip already exists. It is not a replacement for the MASTER PROMPT and it must not restart the video.
+
+FIRST GENERATION — MASTER PROMPT
+Write one complete MASTER PROMPT for a standalone video of EXACTLY 8 seconds in native vertical 9:16.
+The 8 seconds must contain EXACTLY 4 distinct, fast commercial shots inside the same generation.
+The ending must feel complete and intentional so the user can stop at 8 seconds without the video feeling unfinished.
+Use this structure:
+SHOT 1: opening hook / establish the product.
+SHOT 2: a different angle or controlled movement revealing a visible product characteristic.
+SHOT 3: a close-up, detail, or realistic human interaction ONLY when supported by the screenshot; otherwise use a controlled detail reveal.
+SHOT 4: premium final hero composition with a clean, deliberate ending.
+Each shot must have its own framing and movement. Do not make the whole video one continuous orbit.
+
+OPTIONAL EXTENSION — EXTEND INSTRUCTION
+Write one separate, copy-ready EXTEND INSTRUCTION for Google Flow Extend that adds EXACTLY 8 more seconds to the existing first clip.
+It must explicitly say to continue from the CURRENT END of the existing clip, not restart from the beginning.
+It must preserve the exact same product identity, visual world, lighting direction, camera language, and any person/model continuity established in the first clip.
+Create EXACTLY 4 NEW, fast commercial shots during the added 8 seconds.
+Do not repeat the four visual beats from the first 8 seconds.
+The extension should feel like the same continuous commercial, with a natural handoff from the final frame of the first clip into the first moment of the extension.
+End the extension with a deliberate final hero composition suitable as the end of a 16-second version.
+The Extend Instruction must be usable by itself in the Extend prompt field after the first 8-second clip exists; do not tell the user to paste the MASTER PROMPT again.
 
 REFERENCE DISCIPLINE
 1. Identify the actual product shown in the CURRENT screenshot.
 2. Use only visible, verifiable characteristics: shape, proportions, color, material/texture, markings, branding, controls, openings, accessories, and other clearly visible details.
-3. Never assume a product category from previous examples.
+3. Never assume a product category from previous examples or outside knowledge.
 4. Never invent hidden mechanisms, specifications, dimensions, ingredients, performance claims, accessories, materials, colors, or functions.
 5. If a detail is uncertain or hidden, omit it.
 6. Remove marketplace UI from the visual concept: price, rating, seller information, shopping buttons, status bars, notifications, menus, and unrelated overlays.
 7. Keep the real product as the hero subject. Do not replace, redesign, duplicate, morph, or merge it.
+8. If a human figure/model is used, it must be realistic and consistent across the extension. Do not invent a person if it is not useful.
 
-PROMPT 1 — FIRST 8 SECONDS
-Write a complete Google Flow prompt for the FIRST 8-second video.
-It must contain exactly 4 distinct shots:
-SHOT 1: opening hook / establish product.
-SHOT 2: a different angle or controlled movement that reveals a visible product feature.
-SHOT 3: a close-up, detail, or realistic human interaction ONLY if supported by the screenshot; otherwise use a controlled detail reveal.
-SHOT 4: premium final hero composition.
-Every shot must have its own framing and movement. Do not make the whole video one continuous orbit.
+GLOBAL VISUAL RULES
+- Native vertical 9:16.
+- Exactly 8 seconds per generation.
+- Exactly 4 shots per 8-second generation.
+- Visual only: NO spoken dialogue, NO narration, NO music, NO sound effects, NO captions/subtitles unless text is physically printed on the real product and clearly visible in the reference.
+- Clean commercial cinematic look.
+- Realistic lighting, physically plausible motion, stable product geometry, and natural camera movement.
+- Product identity must remain faithful to the supplied screenshot.
+- Use the attached screenshot as the sole product identity reference.
+- Do not create AI images or storyboard images.
+- Do not add unsupported claims or invented features.
 
-PROMPT 2 — SECOND 8 SECONDS / CONTINUATION
-Write a second complete Google Flow prompt for ANOTHER 8-second video that CONTINUES directly from the end of Prompt 1.
-It must again contain exactly 4 distinct shots.
-It is NOT a merged 16-second prompt.
-It is NOT a repeat of Prompt 1.
-The opening frame of Prompt 2 should logically continue the final visual state of Prompt 1: same product identity, same visual world, compatible lighting/background, and a natural continuation of the commercial story.
-Use four NEW visual beats that reveal other visible aspects of the same product.
-If Prompt 1 includes a person/model, preserve continuity of appearance and wardrobe in Prompt 2.
-Prompt 2 must work as a standalone Google Flow generation after Prompt 1 has been generated.
+CONTINUITY RULE FOR EXTEND
+The second 8 seconds is an extension of the already generated first 8 seconds. The instruction must begin from the existing clip's final visual state and continue forward. Do not restart, reset the environment, change the product, or introduce an unrelated scene.
 
-MASTER PROMPT
-Write one reusable MASTER PROMPT that defines the global visual rules for both Prompt 1 and Prompt 2. It must be grounded in the CURRENT screenshot and must tell Google Flow to use the attached screenshot as the sole product identity reference.
-The master prompt must cover:
-- exact 9:16 framing;
-- product fidelity;
-- clean commercial cinematic look;
-- realistic lighting and physically plausible movement;
-- marketplace UI removal;
-- continuity rules;
-- no unsupported claims or invented product features;
-- visual-only output with no audio;
-- exactly 4 shots per 8-second generation;
-- Prompt 2 continuation rules.
-
-IMPORTANT
-The MASTER PROMPT, PROMPT 1 and PROMPT 2 must be written in English because they will be pasted into Google Flow.
-Do not generate storyboard images.
-Do not return six scenes.
-Do not return JSON inside the prompt text.
+LANGUAGE
+Write both blocks in English because the user will paste them into Google Flow.
 
 RETURN FORMAT
 Return ONLY valid JSON with exactly these keys:
 {
   "master_prompt": "...",
-  "prompt_1": "...",
-  "prompt_2": "..."
+  "extend_instruction": "..."
 }
 No markdown fences. No explanation before or after the JSON.
 
 SELF-CHECK
-Before returning JSON, verify that every specific product feature and physical action is supported by the CURRENT screenshot. Delete unsupported details rather than guessing.`;
+Before returning JSON:
+- Confirm there are exactly two keys.
+- Confirm MASTER PROMPT is for a complete standalone 8-second video.
+- Confirm EXTEND INSTRUCTION is for Google Flow Extend and adds 8 seconds to the existing clip.
+- Confirm neither block asks for audio.
+- Confirm neither block creates images or storyboard images.
+- Confirm the extension does not restart or repeat the first 8 seconds.
+- Delete unsupported product details rather than guessing.\`;
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
@@ -181,8 +185,8 @@ async function callGemini(key){
         text=text.replace(/^\`\`\`json\s*/,'').replace(/\s*\`\`\`$/,'').trim();
         try{
           const parsed=JSON.parse(text);
-          if(parsed?.master_prompt&&parsed?.prompt_1&&parsed?.prompt_2)return parsed;
-          last='Gemini mengembalikan format yang tidak lengkap.';
+          if(parsed?.master_prompt&&parsed?.extend_instruction&&!parsed?.prompt_1&&!parsed?.prompt_2)return parsed;
+          last='Gemini mengembalikan format yang tidak sesuai.';
         }catch(e){
           last='Gemini mengembalikan JSON yang tidak valid.';
         }
@@ -213,9 +217,8 @@ function render(){
   sheet.innerHTML=
     '<div class="story-title">GOOGLE FLOW PROMPT</div>'+
     '<div class="story-format">9:16 · 8 DETIK PER GENERATION · 4 SHOT · VISUAL ONLY</div>'+
-    '<div class="prompt-block"><div class="prompt-head"><strong>MASTER PROMPT</strong></div><pre class="master-prompt">'+esc(masterPrompt)+'</pre></div>'+
-    '<div class="prompt-block"><div class="prompt-head"><strong>PROMPT 1 · 8 DETIK</strong><span>Video pertama · 4 shot</span></div><pre class="master-prompt">'+esc(prompt1)+'</pre></div>'+
-    '<div class="prompt-block"><div class="prompt-head"><strong>PROMPT 2 · LANJUTAN 8 DETIK</strong><span>Video kedua · 4 shot · lanjut dari Prompt 1</span></div><pre class="master-prompt">'+esc(prompt2)+'</pre></div>';
+    '<div class="prompt-block"><div class="prompt-head"><strong>MASTER PROMPT · 8 DETIK</strong><span>Generate pertama · selesai di 8 detik</span></div><pre class="master-prompt">'+esc(masterPrompt)+'</pre></div>'+
+    '<div class="prompt-block"><div class="prompt-head"><strong>EXTEND INSTRUCTION · +8 DETIK</strong><span>Google Flow Extend · lanjut dari klip pertama</span></div><pre class="master-prompt">'+esc(extendInstruction)+'</pre></div>';
 }
 
 async function generate(){
@@ -224,14 +227,13 @@ async function generate(){
   if(!key){setStoryStatus('Masukkan API key Gemini terlebih dahulu.');keyEl?.focus();return}
   localStorage.setItem('iwan_gemini_api_key',key);
   generateBtn.disabled=true;
-  setStoryStatus('Gemini sedang membaca screenshot dan membuat MASTER PROMPT + PROMPT 1 + PROMPT 2…');
+  setStoryStatus('Gemini sedang membaca screenshot dan membuat MASTER PROMPT + EXTEND INSTRUCTION…');
   try{
     const result=await callGemini(key);
     masterPrompt=result.master_prompt.trim();
-    prompt1=result.prompt_1.trim();
-    prompt2=result.prompt_2.trim();
+    extendInstruction=result.extend_instruction.trim();
     render();
-    setStoryStatus('✓ Selesai: 8 detik = 4 shot. Prompt 2 adalah lanjutan 8 detik bila ingin total 16 detik. Tanpa audio.');
+    setStoryStatus('✓ Selesai: MASTER PROMPT = 8 detik selesai. EXTEND INSTRUCTION = +8 detik bila ingin total 16 detik. Tanpa audio.');
   }catch(e){
     setStoryStatus('Gagal: '+(e.message||e));
   }finally{generateBtn.disabled=false}
@@ -246,8 +248,7 @@ async function copyText(text,label){
 }
 generateBtn?.addEventListener('click',generate);
 copyMasterBtn?.addEventListener('click',()=>copyText(masterPrompt,'MASTER PROMPT'));
-copyPrompt1Btn?.addEventListener('click',()=>copyText(prompt1,'PROMPT 1'));
-copyPrompt2Btn?.addEventListener('click',()=>copyText(prompt2,'PROMPT 2'));
+copyExtendBtn?.addEventListener('click',()=>copyText(extendInstruction,'EXTEND INSTRUCTION'));
 
 downloadMasterBtn?.addEventListener('click',()=>{
   if(!masterPrompt){setStoryStatus('Buat prompt terlebih dahulu.');return}
