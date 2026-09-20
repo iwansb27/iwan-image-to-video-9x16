@@ -3,7 +3,9 @@ const storyDrop=document.querySelector('#storyDrop');
 const keyEl=document.querySelector('#geminiKey');
 const generateBtn=document.querySelector('#generateStoryboard');
 const copyMasterBtn=document.querySelector('#copyMasterPrompt');
-const flowDurationEl=document.querySelector('#flowDuration');
+const copyPrompt1Btn=document.querySelector('#copyPrompt1');
+const copyPrompt2Btn=document.querySelector('#copyPrompt2');
+const downloadMasterBtn=document.querySelector('#downloadMasterPrompt');
 const storyStatus=document.querySelector('#storyStatus');
 const sheet=document.querySelector('#storyboardSheet');
 const saveKeyBtn=document.querySelector('#saveGeminiKey');
@@ -11,12 +13,16 @@ const keySaveStatus=document.querySelector('#keySaveStatus');
 
 let sourceDataUrl='';
 let masterPrompt='';
+let prompt1='';
+let prompt2='';
+
 const storyPreviewWrap=document.querySelector('#storyPreviewWrap');
 const storyPreview=document.querySelector('#storyPreview');
 const storyPreviewMeta=document.querySelector('#storyPreviewMeta');
 
 function setStoryStatus(t){if(storyStatus)storyStatus.textContent=t}
 function fileToDataUrl(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)})}
+
 function loadKey(){
   try{
     const k=localStorage.getItem('iwan_gemini_api_key')||'';
@@ -45,64 +51,87 @@ async function setSource(file){
   sourceDataUrl=await fileToDataUrl(file);
   if(storyPreview){storyPreview.src=sourceDataUrl;storyPreviewWrap.hidden=false}
   if(storyPreviewMeta){storyPreviewMeta.textContent=file.name+' · '+Math.round(file.size/1024)+' KB'}
-  setStoryStatus('✓ Screenshot berhasil di-upload dan tampil di preview. Periksa gambar ini terlebih dahulu sebelum membuat prompt.');
+  setStoryStatus('✓ Screenshot siap. Gemini akan membaca gambar ini sebagai satu-satunya referensi produk.');
 }
 storyImageEl?.addEventListener('change',e=>setSource(e.target.files?.[0]));
 storyDrop?.addEventListener('dragover',e=>e.preventDefault());
 storyDrop?.addEventListener('drop',async e=>{e.preventDefault();await setSource(e.dataTransfer.files?.[0])});
 
 function storyboardInstruction(){
-  const duration=flowDurationEl?.value||'8';
-  const is8=duration==='8';
-  const timeline=is8
-    ? `Create SIX DISTINCT SHOTS inside ONE ${duration}-second video. This is a shot-based commercial, NOT one continuous camera take. Use clear visual transitions/hard cuts so all 6 shots are actually perceptible: SHOT 1 00:00-00:01.33 — opening hook; SHOT 2 00:01.33-00:02.67 — clear product reveal; SHOT 3 00:02.67-00:04.00 — visible use/demo ONLY IF directly supported by the reference, otherwise a feature/detail reveal; SHOT 4 00:04.00-00:05.33 — explain/show one clearly visible feature or marking; SHOT 5 00:05.33-00:06.67 — macro detail/material/texture reveal; SHOT 6 00:06.67-00:08.00 — final hero shot. Each shot must have a distinct framing, camera action, or visual purpose. Do not merge the six shots into one orbit or one uninterrupted rotation. The six shots must all be visibly represented within the full ${duration} seconds.`
-    : `Create SIX DISTINCT SHOTS inside ONE ${duration}-second video. This is a shot-based commercial, not one continuous camera take. Use clear visual transitions/hard cuts so all 6 shots are perceptible: SHOT 1 00:00-00:02 — opening hook; SHOT 2 00:02-00:04 — product reveal; SHOT 3 00:04-00:06 — visible use/demo ONLY IF directly supported, otherwise feature/detail reveal; SHOT 4 00:06-00:08 — visible feature/marking; SHOT 5 00:08-00:10 — macro detail; SHOT 6 00:10-00:12 — final hero shot. Each shot must have a distinct framing, camera action, or visual purpose.`;
-return `Analyze ONLY the single product screenshot attached to this request. This instruction is a GENERAL PRODUCTION RULE for ANY future product screenshot, not a template for one example product. Never assume the product is a lighter, electronics accessory, pump, beauty item, food item, tool, or any other specific category unless the current reference image clearly shows that category.
+return `Analyze ONLY the single product screenshot attached to this request.
 
-Console 2 does NOT create, edit, or download images. Your ONLY task is to produce ONE MASTER PROMPT TEXT that the user can paste directly into Google Flow.
+PURPOSE
+Create prompt instructions for Google Flow. The user will give the SAME screenshot to Google Flow as the visual reference. Gemini does NOT create a video, does NOT create images, and does NOT combine clips.
 
-Google Flow will receive the SAME CURRENT screenshot as its reference image. The master prompt must tell Google Flow how to turn that current reference into one clean, realistic, cinematic product advertisement in native vertical 9:16 with TOTAL duration exactly ${duration} SECONDS.
-
-REFERENCE-GROUNDED ANALYSIS — DO THIS BEFORE WRITING THE MASTER PROMPT:
-1. Identify what product/category is actually visible in the CURRENT screenshot.
-2. Separate clearly visible facts from uncertain or hidden details.
-3. Treat the CURRENT screenshot as the only source of truth for product identity. Do not use knowledge of similar products, remembered examples, brand catalogs, or assumptions from previous requests.
-4. Identify only features that are visibly present or reliably identifiable from the CURRENT screenshot: shape, proportions, colors, printed markings/branding, materials, textures, controls, connectors, openings, accessories, and other physical details.
-5. If a feature is ambiguous, partially hidden, too small to read, or not visible, DO NOT turn it into a factual claim.
-6. Never invent internal components, hidden mechanisms, accessories, colors, materials, functions, specifications, dimensions, or use cases.
-7. Before finalizing, mentally audit every specific noun and every claimed product feature in the master prompt against the CURRENT screenshot. Remove anything that is not supported by the CURRENT screenshot.
-
-VIDEO STRUCTURE:
-${timeline}
-
-SCENE SAFETY RULE:
-Do NOT force a usage demonstration. If the screenshot does not clearly support how the product is used, do not invent another device, a person's hands, a hidden mechanism, an attachment, a flame, liquid, food, charging action, opening/closing mechanism, or any other interaction. Replace the unsupported action with controlled camera movement, lighting, rotation, texture/detail reveal, or a close-up of visible product features.
-
-GOOGLE FLOW INSTRUCTIONS TO INCLUDE:
-- Use the CURRENT reference screenshot as the sole identity reference from first frame to last frame.
-- Clean the source screenshot by removing marketplace UI, status bars, price, ratings, seller information, shopping buttons, menus, notifications, unrelated overlay graphics, and marketplace watermarks.
-- Preserve the actual product identity. Do not redesign, replace, merge, duplicate, or morph the product.
-- Preserve only the physical characteristics supported by the CURRENT screenshot.
-- If the source background is unsuitable, create a clean realistic background while keeping the product unchanged.
-- No random text, generated branding, extra logos, watermarks, or visual artifacts.
-- Use realistic commercial lighting, reflections, depth of field, and physically plausible camera movement.
-- Prefer controlled push-in, pan, tilt, partial orbit, rack focus, macro close-up, gentle rotation, or pull-back. Avoid aggressive 360-degree or extreme camera movement that can cause identity drift.
-- Maintain product identity and visual continuity between shots, but DO NOT make the six shots look like one uninterrupted camera move. Each shot must be a visibly separate commercial beat.
-- Do not make unsupported functional, technical, safety, performance, or material claims.\n- The sequence must visually communicate what the product is and what can be verified about it; do not spend the whole video merely rotating the object.\n- Shots 2–5 must deliberately reveal different visible product information rather than repeating the same orbit.
-- If a detail cannot be verified from the CURRENT screenshot, omit it rather than guess.
-- Avoid unsupported “benefit” language; show a visible feature instead.
-- Do not add a second product or unrelated object merely to create a demonstration.
-- Keep the same product scale, proportions, color identity, and visible markings throughout the sequence.
+FINAL VIDEO DESIGN
 - Native vertical 9:16.
-- Total duration exactly ${duration} seconds. Follow the selected duration; do not claim 12 seconds when the selected platform mode is 8 seconds.
-- Style: realistic, premium, clean commercial product advertisement, cinematic lighting, sharp product detail, stable product identity.
-- Do not use “8K” as a requirement; prioritize photorealism, detail, continuity, and fidelity to the reference.
+- Each prompt generates ONE video of EXACTLY 8 seconds.
+- Each 8-second video contains EXACTLY 4 distinct, fast commercial shots.
+- The 4 shots are inside the same 8-second generation, not four separate 8-second videos.
+- Suggested rhythm: about 2 seconds per shot, with natural variation where needed.
+- Visual only: NO spoken dialogue, NO narration, NO music, NO sound effects, NO captions/subtitles unless text is physically printed on the real product and clearly visible in the reference.
+- If a human figure/model is appropriate and visually useful, include a realistic figure/model. Do not invent a figure if it would distract from the product.
+- Product identity must remain stable and faithful to the screenshot.
 
-OUTPUT RULE:
-Return ONLY ONE MASTER PROMPT in English. Do not return analysis, notes, JSON, tables, explanations, alternative prompts, or images. The master prompt itself must contain the complete 6-shot timeline matching the selected duration, the reference-grounded product description, screenshot-cleanup instructions, continuity rules, camera movement, and native 9:16 specifications.
+REFERENCE DISCIPLINE
+1. Identify the actual product shown in the CURRENT screenshot.
+2. Use only visible, verifiable characteristics: shape, proportions, color, material/texture, markings, branding, controls, openings, accessories, and other clearly visible details.
+3. Never assume a product category from previous examples.
+4. Never invent hidden mechanisms, specifications, dimensions, ingredients, performance claims, accessories, materials, colors, or functions.
+5. If a detail is uncertain or hidden, omit it.
+6. Remove marketplace UI from the visual concept: price, rating, seller information, shopping buttons, status bars, notifications, menus, and unrelated overlays.
+7. Keep the real product as the hero subject. Do not replace, redesign, duplicate, morph, or merge it.
 
-FINAL SELF-CHECK BEFORE OUTPUT:
-Ask internally: “Could every specific product feature and every physical interaction in this prompt be verified from the CURRENT screenshot?” If not, delete or neutralize that detail. The prompt must be reusable for completely different product screenshots and must never be biased toward any example product.`;
+PROMPT 1 — FIRST 8 SECONDS
+Write a complete Google Flow prompt for the FIRST 8-second video.
+It must contain exactly 4 distinct shots:
+SHOT 1: opening hook / establish product.
+SHOT 2: a different angle or controlled movement that reveals a visible product feature.
+SHOT 3: a close-up, detail, or realistic human interaction ONLY if supported by the screenshot; otherwise use a controlled detail reveal.
+SHOT 4: premium final hero composition.
+Every shot must have its own framing and movement. Do not make the whole video one continuous orbit.
+
+PROMPT 2 — SECOND 8 SECONDS / CONTINUATION
+Write a second complete Google Flow prompt for ANOTHER 8-second video that CONTINUES directly from the end of Prompt 1.
+It must again contain exactly 4 distinct shots.
+It is NOT a merged 16-second prompt.
+It is NOT a repeat of Prompt 1.
+The opening frame of Prompt 2 should logically continue the final visual state of Prompt 1: same product identity, same visual world, compatible lighting/background, and a natural continuation of the commercial story.
+Use four NEW visual beats that reveal other visible aspects of the same product.
+If Prompt 1 includes a person/model, preserve continuity of appearance and wardrobe in Prompt 2.
+Prompt 2 must work as a standalone Google Flow generation after Prompt 1 has been generated.
+
+MASTER PROMPT
+Write one reusable MASTER PROMPT that defines the global visual rules for both Prompt 1 and Prompt 2. It must be grounded in the CURRENT screenshot and must tell Google Flow to use the attached screenshot as the sole product identity reference.
+The master prompt must cover:
+- exact 9:16 framing;
+- product fidelity;
+- clean commercial cinematic look;
+- realistic lighting and physically plausible movement;
+- marketplace UI removal;
+- continuity rules;
+- no unsupported claims or invented product features;
+- visual-only output with no audio;
+- exactly 4 shots per 8-second generation;
+- Prompt 2 continuation rules.
+
+IMPORTANT
+The MASTER PROMPT, PROMPT 1 and PROMPT 2 must be written in English because they will be pasted into Google Flow.
+Do not generate storyboard images.
+Do not return six scenes.
+Do not return JSON inside the prompt text.
+
+RETURN FORMAT
+Return ONLY valid JSON with exactly these keys:
+{
+  "master_prompt": "...",
+  "prompt_1": "...",
+  "prompt_2": "..."
+}
+No markdown fences. No explanation before or after the JSON.
+
+SELF-CHECK
+Before returning JSON, verify that every specific product feature and physical action is supported by the CURRENT screenshot. Delete unsupported details rather than guessing.`;
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
@@ -110,9 +139,8 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 async function callGemini(key){
   const base64=sourceDataUrl.split(',')[1];
   const mime=sourceDataUrl.slice(5,sourceDataUrl.indexOf(';'));
-
   const models=['gemini-3.8-flash','gemini-3.7-flash','gemini-3.6-flash','gemini-3.5-flash-lite'];
-  let last='Gemini tidak dapat membuat master prompt.';
+  let last='Gemini tidak dapat membuat prompt.';
 
   for(const model of models){
     try{
@@ -130,7 +158,7 @@ async function callGemini(key){
               {type:'image',mime_type:mime,data:base64},
               {type:'text',text:storyboardInstruction()}
             ],
-            generation_config:{max_output_tokens:4096}
+            generation_config:{max_output_tokens:6000}
           }),
           signal:ctl.signal
         });
@@ -149,22 +177,24 @@ async function callGemini(key){
             }
           }
         }
-        const text=parts.join('').trim()||data?.output_text?.trim()||'';
-        if(text)return text;
-        last='Gemini '+model+' selesai tetapi tidak mengembalikan teks.';
+        let text=parts.join('').trim()||data?.output_text?.trim()||'';
+        text=text.replace(/^\`\`\`json\s*/,'').replace(/\s*\`\`\`$/,'').trim();
+        try{
+          const parsed=JSON.parse(text);
+          if(parsed?.master_prompt&&parsed?.prompt_1&&parsed?.prompt_2)return parsed;
+          last='Gemini mengembalikan format yang tidak lengkap.';
+        }catch(e){
+          last='Gemini mengembalikan JSON yang tidak valid.';
+        }
         continue;
       }
 
       const msg=data?.error?.message||('HTTP '+res.status+' dari Gemini '+model+'.');
       last=msg;
       if([400,401,403,404].includes(res.status))throw Error(msg);
-
       if([429,500,502,503,504].includes(res.status)){
         const retryAfter=Number(res.headers.get('retry-after'));
-        const waitMs=Number.isFinite(retryAfter)&&retryAfter>0
-          ?Math.min(retryAfter*1000,15000)
-          :3000;
-        await sleep(waitMs);
+        await sleep(Number.isFinite(retryAfter)&&retryAfter>0?Math.min(retryAfter*1000,15000):3000);
         continue;
       }
     }catch(e){
@@ -173,38 +203,62 @@ async function callGemini(key){
       if(/API key|permission|unauthorized|forbidden|not found|invalid/i.test(last))throw Error(last);
     }
   }
-
   throw Error('Semua model Gemini yang dicoba sedang tidak dapat melayani permintaan. Detail terakhir: '+last);
 }
 
 function esc(v=''){
-  return String(v).replace(/[&<>\\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\':'&quot;','"':'&quot;'}[c]));
+  return String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
-
 function render(){
-  const d=flowDurationEl?.value||'8'; sheet.innerHTML='<div class="story-title">MASTER PROMPT — GOOGLE FLOW</div><div class="story-format">9:16 · 6 SHOT · '+d+' DETIK</div><pre class="master-prompt">'+esc(masterPrompt)+'</pre>';
+  sheet.innerHTML=
+    '<div class="story-title">GOOGLE FLOW PROMPT</div>'+
+    '<div class="story-format">9:16 · 8 DETIK PER GENERATION · 4 SHOT · VISUAL ONLY</div>'+
+    '<div class="prompt-block"><div class="prompt-head"><strong>MASTER PROMPT</strong></div><pre class="master-prompt">'+esc(masterPrompt)+'</pre></div>'+
+    '<div class="prompt-block"><div class="prompt-head"><strong>PROMPT 1 · 8 DETIK</strong><span>Video pertama · 4 shot</span></div><pre class="master-prompt">'+esc(prompt1)+'</pre></div>'+
+    '<div class="prompt-block"><div class="prompt-head"><strong>PROMPT 2 · LANJUTAN 8 DETIK</strong><span>Video kedua · 4 shot · lanjut dari Prompt 1</span></div><pre class="master-prompt">'+esc(prompt2)+'</pre></div>';
 }
 
 async function generate(){
-  if(!sourceDataUrl){setStoryStatus('Upload 1 gambar produk terlebih dahulu.');return}
+  if(!sourceDataUrl){setStoryStatus('Upload 1 screenshot produk terlebih dahulu.');return}
   const key=keyEl?.value.trim()||localStorage.getItem('iwan_gemini_api_key')||'';
   if(!key){setStoryStatus('Masukkan API key Gemini terlebih dahulu.');keyEl?.focus();return}
   localStorage.setItem('iwan_gemini_api_key',key);
   generateBtn.disabled=true;
-  setStoryStatus('Gemini sedang membaca screenshot dan menyusun 6 shot yang berbeda…');
+  setStoryStatus('Gemini sedang membaca screenshot dan membuat MASTER PROMPT + PROMPT 1 + PROMPT 2…');
   try{
-    masterPrompt=await callGemini(key);
+    const result=await callGemini(key);
+    masterPrompt=result.master_prompt.trim();
+    prompt1=result.prompt_1.trim();
+    prompt2=result.prompt_2.trim();
     render();
-    setStoryStatus('✓ MASTER PROMPT 6 SHOT · 8 detik · sudah diperiksa otomatis terhadap screenshot.');
+    setStoryStatus('✓ Selesai: 8 detik = 4 shot. Prompt 2 adalah lanjutan 8 detik bila ingin total 16 detik. Tanpa audio.');
   }catch(e){
     setStoryStatus('Gagal: '+(e.message||e));
   }finally{generateBtn.disabled=false}
 }
 
+async function copyText(text,label){
+  if(!text){setStoryStatus('Buat prompt terlebih dahulu.');return}
+  try{
+    await navigator.clipboard.writeText(text);
+    setStoryStatus('✓ '+label+' sudah di-copy.');
+  }catch(e){setStoryStatus('Clipboard tidak tersedia. Pilih dan copy teks dari kotak prompt.')}
+}
 generateBtn?.addEventListener('click',generate);
+copyMasterBtn?.addEventListener('click',()=>copyText(masterPrompt,'MASTER PROMPT'));
+copyPrompt1Btn?.addEventListener('click',()=>copyText(prompt1,'PROMPT 1'));
+copyPrompt2Btn?.addEventListener('click',()=>copyText(prompt2,'PROMPT 2'));
 
-copyMasterBtn?.addEventListener('click',async()=>{
+downloadMasterBtn?.addEventListener('click',()=>{
   if(!masterPrompt){setStoryStatus('Buat prompt terlebih dahulu.');return}
-  await navigator.clipboard.writeText(masterPrompt);
-  setStoryStatus('✓ Master Prompt sudah di-copy untuk Google Flow.');
+  const blob=new Blob([masterPrompt],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='IWAN_MASTER_PROMPT_GOOGLE_FLOW.txt';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  setStoryStatus('✓ MASTER PROMPT berhasil diunduh sebagai TXT.');
 });
