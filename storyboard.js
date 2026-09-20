@@ -56,7 +56,7 @@ storyDrop?.addEventListener('dragover',e=>e.preventDefault());
 storyDrop?.addEventListener('drop',async e=>{e.preventDefault();await setSource(e.dataTransfer.files?.[0])});
 
 function storyboardInstruction(){
-return \`Analyze ONLY the single product screenshot attached to this request.
+return `Analyze ONLY the single product screenshot attached to this request.
 
 PURPOSE
 Create exactly TWO copy-ready instruction blocks for Google Flow. The user will give the SAME product screenshot to Google Flow as the visual reference. Gemini only reads the screenshot and writes text. Gemini does NOT create a video, does NOT create images, and does NOT create a storyboard image.
@@ -135,7 +135,7 @@ Before returning JSON:
 - Confirm neither block asks for audio.
 - Confirm neither block creates images or storyboard images.
 - Confirm the extension does not restart or repeat the first 8 seconds.
-- Delete unsupported product details rather than guessing.\`;
+- Delete unsupported product details rather than guessing.`;
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
@@ -182,7 +182,7 @@ async function callGemini(key){
           }
         }
         let text=parts.join('').trim()||data?.output_text?.trim()||'';
-        text=text.replace(/^\`\`\`json\s*/,'').replace(/\s*\`\`\`$/,'').trim();
+        text=text.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim();
         try{
           const parsed=JSON.parse(text);
           if(parsed?.master_prompt&&parsed?.extend_instruction&&!parsed?.prompt_1&&!parsed?.prompt_2)return parsed;
