@@ -1,0 +1,16 @@
+# Node / build
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Convex local run data (NOT secrets)
+.convex/
+
+# Environment — user manages via Settings → Environment / Keys
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db

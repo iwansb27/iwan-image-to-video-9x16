@@ -1,0 +1,20 @@
+{
+  "name": "mr-one-content-production-hub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MR.ONE Content Production Hub — prototype backend Convex (Stage 02)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "convex:dev": "convex dev --once",
+    "typecheck": "tsc -b --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vite": "^7.1.0"
+  },
+  "dependencies": {
+    "convex": "^1.28.0"
+  }
+}
