@@ -2,20 +2,25 @@
   "name": "mr-one-content-production-hub",
   "version": "0.1.0",
   "private": true,
-  "description": "MR.ONE Content Production Hub — prototype backend Convex (Stage 02)",
+  "description": "MR.ONE Content Production Hub — browser UI plus Manufact-compatible MCP orchestration layer",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "start": "vite preview --host 0.0.0.0 --port 3000",
+    "dev:mcp": "mcp-use dev",
+    "build:web": "vite build",
+    "build": "mcp-use build",
+    "start": "mcp-use start",
     "convex:dev": "convex dev --once",
     "typecheck": "tsc -b --noEmit"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
-    "vite": "^7.1.0"
+    "vite": "^7.1.0",
+    "@mcp-use/cli": "^4.1.16"
   },
   "dependencies": {
-    "convex": "^1.28.0"
+    "convex": "^1.28.0",
+    "mcp-use": "^2.7.0",
+    "zod": "^3.25.76"
   }
 }
